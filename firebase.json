@@ -1,0 +1,25 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-android-txlsocia-b508124b-da7e-4108-97ed-0a93693b1ca3",
+      "rules": "firestore.rules"
+    }
+  ],
+  "hosting": {
+    "public": "web-invite",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
+  "emulators": {
+    "firestore": {
+      "host": "127.0.0.1",
+      "port": 8085
+    },
+    "ui": {
+      "enabled": false
+    }
+  }
+}

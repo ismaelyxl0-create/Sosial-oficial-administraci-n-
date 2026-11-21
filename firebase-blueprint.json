@@ -1,0 +1,373 @@
+{
+  "entities": {
+    "PrivateUserProfile": {
+      "title": "PrivateUserProfile",
+      "description": "Authenticated user's private profile containing verified email PII and moderation state.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "username": { "type": "string", "description": "Display handle (3-30 chars)" },
+        "email": { "type": "string", "description": "Verified Google account email" },
+        "emailVerified": { "type": "boolean", "description": "Whether the Google email is verified" },
+        "bio": { "type": "string", "description": "Optional user bio" },
+        "customStatus": { "type": "string", "description": "Optional custom status badge" },
+        "avatarFrameId": { "type": "string", "description": "Equipped avatar frame ID" },
+        "presetAvatarKey": { "type": "string", "description": "Default preset avatar key" },
+        "avatarUrl": { "type": "string", "description": "Optional profile photo URL" },
+        "communitiesCount": { "type": "integer" },
+        "followersCount": { "type": "integer" },
+        "postsCount": { "type": "integer" },
+        "coinsCount": { "type": "integer" },
+        "giftsReceivedCount": { "type": "integer" },
+        "donorExp": { "type": "integer", "description": "Cumulative donor & task experience points" },
+        "donorLevel": { "type": "integer", "description": "Computed donor tier level (>= 1)" },
+        "totalCoinsDonated": { "type": "integer", "description": "Cumulative coins spent on room gifts" },
+        "dailyStreakDay": { "type": "integer", "description": "Current 7-day check-in day (0..7)" },
+        "lastDailyCheckInAtMillis": { "type": "integer", "description": "Timestamp millis of last daily check-in" },
+        "followHostsProgress": { "type": "integer" },
+        "watchLiveMinutesProgress": { "type": "integer" },
+        "gameCoinsEarnedProgress": { "type": "integer" },
+        "giftCoinsSentProgress": { "type": "integer" },
+        "claimedTaskIds": { "type": "string", "description": "Comma-separated claimed daily task IDs" },
+        "inventoryJson": { "type": "string", "description": "Serialized Mi bolsa reward inventory counts" },
+        "mePlusMember": { "type": "boolean" },
+        "lastMePlusDrawAtMillis": { "type": "integer" },
+        "maxFrameSlots": { "type": "integer", "description": "Permanent frame selling quota (10, 20, 35, 55, 80, 120)" },
+        "creatorSalesCount": { "type": "integer" },
+        "creatorEarningsCoins": { "type": "integer" },
+        "favoriteFrameIds": { "type": "string" },
+        "appRankId": { "type": "string", "enum": ["none", "owner", "moderator", "influencer"] },
+        "banned": { "type": "boolean" },
+        "banReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Written via FieldValue.serverTimestamp()" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Written via FieldValue.serverTimestamp()" }
+      },
+      "required": ["userId", "username", "email", "emailVerified", "avatarFrameId", "presetAvatarKey", "communitiesCount", "followersCount", "postsCount", "coinsCount", "giftsReceivedCount", "appRankId", "banned", "createdAt", "updatedAt"]
+    },
+    "PublicUserProfile": {
+      "title": "PublicUserProfile",
+      "description": "Global discoverable public profile without PII (no email).",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "discoverable": { "type": "boolean" },
+        "bio": { "type": "string" },
+        "customStatus": { "type": "string" },
+        "avatarFrameId": { "type": "string" },
+        "presetAvatarKey": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "communitiesCount": { "type": "integer" },
+        "followersCount": { "type": "integer" },
+        "postsCount": { "type": "integer" },
+        "giftsReceivedCount": { "type": "integer" },
+        "donorExp": { "type": "integer" },
+        "donorLevel": { "type": "integer" },
+        "appRankId": { "type": "string", "enum": ["none", "owner", "moderator", "influencer"] },
+        "banned": { "type": "boolean" },
+        "banReason": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "username", "discoverable", "avatarFrameId", "presetAvatarKey", "communitiesCount", "followersCount", "postsCount", "giftsReceivedCount", "appRankId", "banned", "createdAt", "updatedAt"]
+    },
+    "Community": {
+      "title": "Community",
+      "description": "Global IRL or Gamer live stream and voice room community.",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "coverKey": { "type": "string" },
+        "badgeLabel": { "type": "string", "enum": ["popular", "nueva"] },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "memberCount": { "type": "integer" },
+        "activeVoiceCount": { "type": "integer" },
+        "voiceLocked": { "type": "boolean" },
+        "backgroundUri": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "name", "category", "description", "coverKey", "badgeLabel", "visibility", "memberCount", "activeVoiceCount", "voiceLocked", "createdAt", "updatedAt"]
+    },
+    "Membership": {
+      "title": "Membership",
+      "description": "User membership and room role inside a community.",
+      "type": "object",
+      "properties": {
+        "communityId": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "CO_ADMIN", "MEMBER"] },
+        "roomVisibility": { "type": "string", "enum": ["public"] },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "userId", "role", "roomVisibility", "joinedAt", "updatedAt"]
+    },
+    "VoiceParticipant": {
+      "title": "VoiceParticipant",
+      "description": "Real-time voice room participant state (mic muted, speaking, raised hand).",
+      "type": "object",
+      "properties": {
+        "communityId": { "type": "string" },
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "presetAvatarKey": { "type": "string" },
+        "avatarFrameId": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "appRankId": { "type": "string", "enum": ["none", "owner", "moderator", "influencer"] },
+        "role": { "type": "string", "enum": ["ADMIN", "CO_ADMIN", "MEMBER"] },
+        "roomVisibility": { "type": "string", "enum": ["public"] },
+        "muted": { "type": "boolean" },
+        "speaking": { "type": "boolean" },
+        "handRaised": { "type": "boolean" },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "userId", "username", "presetAvatarKey", "avatarFrameId", "appRankId", "role", "roomVisibility", "muted", "speaking", "handRaised", "joinedAt", "updatedAt"]
+    },
+    "VoiceFrame": {
+      "title": "VoiceFrame",
+      "description": "Low-latency G.711 mu-law real-time multi-speaker audio frame packet.",
+      "type": "object",
+      "properties": {
+        "communityId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "roomVisibility": { "type": "string", "enum": ["public"] },
+        "seq": { "type": "integer" },
+        "sampleRate": { "type": "integer" },
+        "codec": { "type": "string", "enum": ["ULAW"] },
+        "payloadB64": { "type": "string" },
+        "rms": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "senderId", "roomVisibility", "seq", "sampleRate", "codec", "payloadB64", "rms", "createdAt"]
+    },
+    "RoomGift": {
+      "title": "RoomGift",
+      "description": "Real-time virtual gift event sent inside a voice or group room.",
+      "type": "object",
+      "properties": {
+        "communityId": { "type": "string" },
+        "channelType": { "type": "string", "enum": ["GROUP", "VOICE"] },
+        "roomVisibility": { "type": "string", "enum": ["public"] },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderAvatarKey": { "type": "string" },
+        "senderFrameId": { "type": "string" },
+        "recipientId": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "giftId": { "type": "string" },
+        "giftName": { "type": "string" },
+        "giftEmoji": { "type": "string" },
+        "coinCost": { "type": "integer" },
+        "comboCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "channelType", "roomVisibility", "senderId", "senderName", "senderAvatarKey", "senderFrameId", "recipientId", "recipientName", "giftId", "giftName", "giftEmoji", "coinCost", "comboCount", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Real-time group or voice-room chat message.",
+      "type": "object",
+      "properties": {
+        "communityId": { "type": "string" },
+        "channelType": { "type": "string", "enum": ["GROUP", "VOICE"] },
+        "roomVisibility": { "type": "string", "enum": ["public"] },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderAvatarKey": { "type": "string" },
+        "senderFrameId": { "type": "string" },
+        "senderAvatarUrl": { "type": "string" },
+        "senderAppRankId": { "type": "string", "enum": ["none", "owner", "moderator", "influencer"] },
+        "senderRole": { "type": "string", "enum": ["ADMIN", "CO_ADMIN", "MEMBER"] },
+        "senderStatus": { "type": "string" },
+        "content": { "type": "string" },
+        "replyToSnippet": { "type": "string" },
+        "reactionCount": { "type": "integer" },
+        "audioUri": { "type": "string" },
+        "audioDataB64": { "type": "string" },
+        "audioDurationMs": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "channelType", "roomVisibility", "senderId", "senderName", "senderAvatarKey", "senderFrameId", "senderAppRankId", "senderRole", "content", "reactionCount", "audioDurationMs", "createdAt", "updatedAt"]
+    },
+    "RoomEvent": {
+      "title": "RoomEvent",
+      "description": "Activity event inside a live voice room.",
+      "type": "object",
+      "properties": {
+        "communityId": { "type": "string" },
+        "actorId": { "type": "string" },
+        "actorName": { "type": "string" },
+        "description": { "type": "string" },
+        "roomVisibility": { "type": "string", "enum": ["public"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["communityId", "actorId", "actorName", "description", "roomVisibility", "createdAt"]
+    },
+    "CommunityPost": {
+      "title": "CommunityPost",
+      "description": "Global clip/post shared in the feed.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatarKey": { "type": "string" },
+        "authorFrameId": { "type": "string" },
+        "authorAvatarUrl": { "type": "string" },
+        "authorAppRankId": { "type": "string", "enum": ["none", "owner", "moderator", "influencer"] },
+        "communityId": { "type": "string" },
+        "communityName": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "content": { "type": "string" },
+        "imageUri": { "type": "string" },
+        "likesCount": { "type": "integer" },
+        "commentsCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "authorName", "authorAvatarKey", "authorFrameId", "authorAppRankId", "visibility", "content", "likesCount", "commentsCount", "createdAt", "updatedAt"]
+    },
+    "PostComment": {
+      "title": "PostComment",
+      "description": "Comment on a global feed post.",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorAvatarKey": { "type": "string" },
+        "authorFrameId": { "type": "string" },
+        "authorAppRankId": { "type": "string", "enum": ["none", "owner", "moderator", "influencer"] },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "authorId", "authorName", "authorAvatarKey", "authorFrameId", "authorAppRankId", "visibility", "content", "createdAt"]
+    },
+    "CustomFrame": {
+      "title": "CustomFrame",
+      "description": "Community-created free avatar frame.",
+      "type": "object",
+      "properties": {
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "title": { "type": "string" },
+        "frameType": { "type": "string", "enum": ["STUDIO", "PNG"] },
+        "pngPath": { "type": "string" },
+        "primaryColorHex": { "type": "integer" },
+        "secondaryColorHex": { "type": "integer" },
+        "stylePatternId": { "type": "string" },
+        "thicknessDp": { "type": "number" },
+        "sparkles": { "type": "boolean" },
+        "priceCoins": { "type": "integer", "description": "Optional coin price set by frame creator (20-500 in store)" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "isFeatured": { "type": "boolean" },
+        "salesCount": { "type": "integer" },
+        "favoriteCount": { "type": "integer" },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["creatorId", "creatorName", "title", "frameType", "primaryColorHex", "secondaryColorHex", "stylePatternId", "thicknessDp", "sparkles", "visibility", "createdAt"]
+    },
+    "DriftingBottle": {
+      "title": "DriftingBottle",
+      "description": "Anonymous temporary bottle floating in the global ocean.",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "anonymousAlias": { "type": "string" },
+        "moodTag": { "type": "string" },
+        "content": { "type": "string" },
+        "replyContent": { "type": "string" },
+        "visibility": { "type": "string", "enum": ["public"] },
+        "expiresAtMillis": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["authorId", "anonymousAlias", "moodTag", "content", "visibility", "expiresAtMillis", "createdAt", "updatedAt"]
+    },
+    "UserNotification": {
+      "title": "UserNotification",
+      "description": "User-scoped notification alert.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "actorId": { "type": "string" },
+        "actorName": { "type": "string" },
+        "actorAvatarKey": { "type": "string" },
+        "actorFrameId": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "category": { "type": "string", "enum": ["FOLLOW", "MENTION", "COMMUNITY", "DRIFTING_BOTTLE"] },
+        "targetCommunityId": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "actorId", "actorName", "actorAvatarKey", "actorFrameId", "title", "subtitle", "category", "read", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/PrivateUserProfile" },
+      "description": "Private user documents containing verified email PII."
+    },
+    "/users_public/{userId}": {
+      "schema": { "$ref": "#/entities/PublicUserProfile" },
+      "description": "Global public user profiles without PII."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/UserNotification" },
+      "description": "Per-user private notifications."
+    },
+    "/communities/{communityId}": {
+      "schema": { "$ref": "#/entities/Community" },
+      "description": "Global live IRL and Gamer rooms."
+    },
+    "/communities/{communityId}/members/{userId}": {
+      "schema": { "$ref": "#/entities/Membership" },
+      "description": "Room membership and roles."
+    },
+    "/communities/{communityId}/voice_participants/{userId}": {
+      "schema": { "$ref": "#/entities/VoiceParticipant" },
+      "description": "Real-time voice room participants."
+    },
+    "/communities/{communityId}/voice_frames/{frameId}": {
+      "schema": { "$ref": "#/entities/VoiceFrame" },
+      "description": "Real-time low-latency audio stream frames for multi-speaker voice rooms."
+    },
+    "/communities/{communityId}/gifts/{giftId}": {
+      "schema": { "$ref": "#/entities/RoomGift" },
+      "description": "Real-time virtual gift events sent inside rooms."
+    },
+    "/communities/{communityId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Real-time group and voice room chat messages."
+    },
+    "/communities/{communityId}/events/{eventId}": {
+      "schema": { "$ref": "#/entities/RoomEvent" },
+      "description": "Real-time voice room activity log events."
+    },
+    "/posts/{postId}": {
+      "schema": { "$ref": "#/entities/CommunityPost" },
+      "description": "Global feed posts and clips."
+    },
+    "/posts/{postId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/PostComment" },
+      "description": "Comments on feed posts."
+    },
+    "/custom_frames/{frameId}": {
+      "schema": { "$ref": "#/entities/CustomFrame" },
+      "description": "Shared avatar frames."
+    },
+    "/drifting_bottles/{bottleId}": {
+      "schema": { "$ref": "#/entities/DriftingBottle" },
+      "description": "Global drifting bottles."
+    }
+  }
+}

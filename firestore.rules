@@ -1,0 +1,691 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- GLOBAL HARDENED HELPERS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Strict App Owner check: ONLY the verified owner email can grant/revoke verified badges or ban users.
+    function isAppOwner() {
+      return isSignedIn() &&
+             request.auth.token.email_verified == true &&
+             request.auth.token.email == 'abukeje26@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidRank(rank) {
+      return rank in ['none', 'owner', 'moderator', 'influencer'];
+    }
+
+    function isValidRole(role) {
+      return role in ['ADMIN', 'CO_ADMIN', 'MEMBER'];
+    }
+
+    function isRoomAdmin(communityId) {
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/communities/$(communityId)) &&
+         get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid) ||
+        (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role == 'ADMIN')
+      );
+    }
+
+    function isRoomCoAdminOrAdmin(communityId) {
+      return isSignedIn() && (
+        isRoomAdmin(communityId) ||
+        (exists(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/communities/$(communityId)/members/$(request.auth.uid)).data.role in ['ADMIN', 'CO_ADMIN'])
+      );
+    }
+
+    // --- VALIDATION HELPERS ---
+
+    function isValidPrivateUser(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 2 && data.username.size() <= 30 &&
+             data.email is string && data.email.size() >= 3 && data.email.size() <= 120 &&
+             data.emailVerified is bool &&
+             data.avatarFrameId is string && data.avatarFrameId.size() >= 1 && data.avatarFrameId.size() <= 64 &&
+             data.presetAvatarKey is string && data.presetAvatarKey.size() >= 1 && data.presetAvatarKey.size() <= 32 &&
+             data.communitiesCount is int && data.communitiesCount >= 0 &&
+             data.followersCount is int && data.followersCount >= 0 &&
+             data.postsCount is int && data.postsCount >= 0 &&
+             data.coinsCount is int && data.coinsCount >= 0 &&
+             data.giftsReceivedCount is int && data.giftsReceivedCount >= 0 &&
+             (!('donorExp' in data) || (data.donorExp is int && data.donorExp >= 0)) &&
+             (!('donorLevel' in data) || (data.donorLevel is int && data.donorLevel >= 1)) &&
+             (!('totalCoinsDonated' in data) || (data.totalCoinsDonated is int && data.totalCoinsDonated >= 0)) &&
+             (!('dailyStreakDay' in data) || (data.dailyStreakDay is int && data.dailyStreakDay >= 0 && data.dailyStreakDay <= 7)) &&
+             (!('lastDailyCheckInAtMillis' in data) || (data.lastDailyCheckInAtMillis is int && data.lastDailyCheckInAtMillis >= 0)) &&
+             (!('followHostsProgress' in data) || (data.followHostsProgress is int && data.followHostsProgress >= 0)) &&
+             (!('watchLiveMinutesProgress' in data) || (data.watchLiveMinutesProgress is int && data.watchLiveMinutesProgress >= 0)) &&
+             (!('gameCoinsEarnedProgress' in data) || (data.gameCoinsEarnedProgress is int && data.gameCoinsEarnedProgress >= 0)) &&
+             (!('giftCoinsSentProgress' in data) || (data.giftCoinsSentProgress is int && data.giftCoinsSentProgress >= 0)) &&
+             (!('claimedTaskIds' in data) || (data.claimedTaskIds is string && data.claimedTaskIds.size() <= 300)) &&
+             (!('inventoryJson' in data) || (data.inventoryJson is string && data.inventoryJson.size() <= 2000)) &&
+             (!('mePlusMember' in data) || data.mePlusMember is bool) &&
+             (!('lastMePlusDrawAtMillis' in data) || (data.lastMePlusDrawAtMillis is int && data.lastMePlusDrawAtMillis >= 0)) &&
+             (!('maxFrameSlots' in data) || (data.maxFrameSlots is int && data.maxFrameSlots >= 10 && data.maxFrameSlots <= 120)) &&
+             (!('creatorSalesCount' in data) || (data.creatorSalesCount is int && data.creatorSalesCount >= 0)) &&
+             (!('creatorEarningsCoins' in data) || (data.creatorEarningsCoins is int && data.creatorEarningsCoins >= 0)) &&
+             (!('favoriteFrameIds' in data) || (data.favoriteFrameIds is string && data.favoriteFrameIds.size() <= 1500)) &&
+             data.appRankId is string && isValidRank(data.appRankId) &&
+             data.banned is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 200)) &&
+             (!('customStatus' in data) || (data.customStatus is string && data.customStatus.size() <= 80)) &&
+             (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 500)) &&
+             (!('banReason' in data) || (data.banReason is string && data.banReason.size() <= 200));
+    }
+
+    function isValidPublicUser(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 2 && data.username.size() <= 30 &&
+             data.discoverable is bool &&
+             data.avatarFrameId is string && data.avatarFrameId.size() >= 1 && data.avatarFrameId.size() <= 64 &&
+             data.presetAvatarKey is string && data.presetAvatarKey.size() >= 1 && data.presetAvatarKey.size() <= 32 &&
+             data.communitiesCount is int && data.communitiesCount >= 0 &&
+             data.followersCount is int && data.followersCount >= 0 &&
+             data.postsCount is int && data.postsCount >= 0 &&
+             data.giftsReceivedCount is int && data.giftsReceivedCount >= 0 &&
+             (!('donorExp' in data) || (data.donorExp is int && data.donorExp >= 0)) &&
+             (!('donorLevel' in data) || (data.donorLevel is int && data.donorLevel >= 1)) &&
+             data.appRankId is string && isValidRank(data.appRankId) &&
+             data.banned is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 200)) &&
+             (!('customStatus' in data) || (data.customStatus is string && data.customStatus.size() <= 80)) &&
+             (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 500)) &&
+             (!('banReason' in data) || (data.banReason is string && data.banReason.size() <= 200));
+    }
+
+    function isValidCommunity(data) {
+      return data.creatorId is string && data.creatorId.size() >= 1 && data.creatorId.size() <= 128 &&
+             data.name is string && data.name.size() >= 3 && data.name.size() <= 40 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 36 &&
+             data.description is string && data.description.size() <= 220 &&
+             data.coverKey is string && data.coverKey.size() >= 1 && data.coverKey.size() <= 32 &&
+             data.badgeLabel is string && data.badgeLabel in ['popular', 'nueva'] &&
+             data.visibility is string && data.visibility == 'public' &&
+             data.memberCount is int && data.memberCount >= 0 &&
+             data.activeVoiceCount is int && data.activeVoiceCount >= 0 &&
+             data.voiceLocked is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('backgroundUri' in data) || (data.backgroundUri is string && data.backgroundUri.size() <= 500));
+    }
+
+    function isValidMembership(data) {
+      return data.communityId is string && data.communityId.size() >= 1 && data.communityId.size() <= 128 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.role is string && isValidRole(data.role) &&
+             data.roomVisibility is string && data.roomVisibility == 'public' &&
+             data.joinedAt is timestamp && data.joinedAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidVoiceParticipant(data) {
+      return data.communityId is string && data.communityId.size() >= 1 && data.communityId.size() <= 128 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.username is string && data.username.size() >= 1 && data.username.size() <= 30 &&
+             data.presetAvatarKey is string && data.presetAvatarKey.size() >= 1 && data.presetAvatarKey.size() <= 32 &&
+             data.avatarFrameId is string && data.avatarFrameId.size() >= 1 && data.avatarFrameId.size() <= 64 &&
+             data.appRankId is string && isValidRank(data.appRankId) &&
+             data.role is string && isValidRole(data.role) &&
+             data.roomVisibility is string && data.roomVisibility == 'public' &&
+             data.muted is bool &&
+             data.speaking is bool &&
+             data.handRaised is bool &&
+             data.joinedAt is timestamp && data.joinedAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 500));
+    }
+
+    function isValidVoiceFrame(data) {
+      return data.communityId is string && data.communityId.size() >= 1 && data.communityId.size() <= 128 &&
+             data.senderId is string && data.senderId.size() >= 1 && data.senderId.size() <= 128 &&
+             data.roomVisibility is string && data.roomVisibility == 'public' &&
+             data.seq is int && data.seq >= 0 &&
+             data.sampleRate is int && data.sampleRate == 8000 &&
+             data.codec is string && data.codec == 'ULAW' &&
+             data.payloadB64 is string && data.payloadB64.size() <= 16000 &&
+             data.rms is number && data.rms >= 0 && data.rms <= 1 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidRoomGift(data) {
+      return data.communityId is string && data.communityId.size() >= 1 && data.communityId.size() <= 128 &&
+             data.channelType is string && data.channelType in ['GROUP', 'VOICE'] &&
+             data.roomVisibility is string && data.roomVisibility == 'public' &&
+             data.senderId is string && data.senderId.size() >= 1 && data.senderId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 30 &&
+             data.senderAvatarKey is string && data.senderAvatarKey.size() >= 1 && data.senderAvatarKey.size() <= 32 &&
+             data.senderFrameId is string && data.senderFrameId.size() >= 1 && data.senderFrameId.size() <= 64 &&
+             data.recipientId is string && data.recipientId.size() >= 1 && data.recipientId.size() <= 128 &&
+             data.recipientName is string && data.recipientName.size() >= 1 && data.recipientName.size() <= 30 &&
+             data.giftId is string && data.giftId.size() >= 1 && data.giftId.size() <= 40 &&
+             data.giftName is string && data.giftName.size() >= 1 && data.giftName.size() <= 40 &&
+             data.giftEmoji is string && data.giftEmoji.size() >= 1 && data.giftEmoji.size() <= 16 &&
+             data.coinCost is int && data.coinCost >= 0 && data.coinCost <= 100000 &&
+             data.comboCount is int && data.comboCount >= 1 && data.comboCount <= 999 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidChatMessage(data) {
+      return data.communityId is string && data.communityId.size() >= 1 && data.communityId.size() <= 128 &&
+             data.channelType is string && data.channelType in ['GROUP', 'VOICE'] &&
+             data.roomVisibility is string && data.roomVisibility == 'public' &&
+             data.senderId is string && data.senderId.size() >= 1 && data.senderId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 30 &&
+             data.senderAvatarKey is string && data.senderAvatarKey.size() >= 1 && data.senderAvatarKey.size() <= 32 &&
+             data.senderFrameId is string && data.senderFrameId.size() >= 1 && data.senderFrameId.size() <= 64 &&
+             data.senderAppRankId is string && isValidRank(data.senderAppRankId) &&
+             data.senderRole is string && isValidRole(data.senderRole) &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 1000 &&
+             data.reactionCount is int && data.reactionCount >= 0 &&
+             data.audioDurationMs is int && data.audioDurationMs >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('senderAvatarUrl' in data) || (data.senderAvatarUrl is string && data.senderAvatarUrl.size() <= 500)) &&
+             (!('senderStatus' in data) || (data.senderStatus is string && data.senderStatus.size() <= 80)) &&
+             (!('replyToSnippet' in data) || (data.replyToSnippet is string && data.replyToSnippet.size() <= 180)) &&
+             (!('audioUri' in data) || (data.audioUri is string && data.audioUri.size() <= 500)) &&
+             (!('audioDataB64' in data) || (data.audioDataB64 is string && data.audioDataB64.size() <= 400000));
+    }
+
+    function isValidRoomEvent(data) {
+      return data.communityId is string && data.communityId.size() >= 1 && data.communityId.size() <= 128 &&
+             data.actorId is string && data.actorId.size() >= 1 && data.actorId.size() <= 128 &&
+             data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 40 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 180 &&
+             data.roomVisibility is string && data.roomVisibility == 'public' &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidPost(data) {
+      return data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 30 &&
+             data.authorAvatarKey is string && data.authorAvatarKey.size() >= 1 && data.authorAvatarKey.size() <= 32 &&
+             data.authorFrameId is string && data.authorFrameId.size() >= 1 && data.authorFrameId.size() <= 64 &&
+             data.authorAppRankId is string && isValidRank(data.authorAppRankId) &&
+             data.visibility is string && data.visibility == 'public' &&
+             data.content is string && data.content.size() <= 500 &&
+             data.likesCount is int && data.likesCount >= 0 &&
+             data.commentsCount is int && data.commentsCount >= 0 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('authorAvatarUrl' in data) || (data.authorAvatarUrl is string && data.authorAvatarUrl.size() <= 500)) &&
+             (!('communityId' in data) || (data.communityId is string && data.communityId.size() <= 128)) &&
+             (!('communityName' in data) || (data.communityName is string && data.communityName.size() <= 60)) &&
+             (!('imageUri' in data) || (data.imageUri is string && data.imageUri.size() <= 500));
+    }
+
+    function isValidPostComment(data) {
+      return data.postId is string && data.postId.size() >= 1 && data.postId.size() <= 128 &&
+             data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 30 &&
+             data.authorAvatarKey is string && data.authorAvatarKey.size() >= 1 && data.authorAvatarKey.size() <= 32 &&
+             data.authorFrameId is string && data.authorFrameId.size() >= 1 && data.authorFrameId.size() <= 64 &&
+             data.authorAppRankId is string && isValidRank(data.authorAppRankId) &&
+             data.visibility is string && data.visibility == 'public' &&
+             data.content is string && data.content.size() >= 1 && data.content.size() <= 280 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    function isValidCustomFrame(data) {
+      return data.creatorId is string && data.creatorId.size() >= 1 && data.creatorId.size() <= 128 &&
+             data.creatorName is string && data.creatorName.size() >= 1 && data.creatorName.size() <= 30 &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 30 &&
+             data.frameType is string && data.frameType in ['STUDIO', 'PNG'] &&
+             data.primaryColorHex is int &&
+             data.secondaryColorHex is int &&
+             data.stylePatternId is string && data.stylePatternId.size() >= 1 && data.stylePatternId.size() <= 32 &&
+             data.thicknessDp is number && data.thicknessDp >= 1 && data.thicknessDp <= 12 &&
+             data.sparkles is bool &&
+             data.visibility is string && data.visibility == 'public' &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('priceCoins' in data) || (data.priceCoins is int && data.priceCoins >= 0 && data.priceCoins <= 100000)) &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 120)) &&
+             (!('category' in data) || (data.category is string && data.category.size() <= 36)) &&
+             (!('isFeatured' in data) || data.isFeatured is bool) &&
+             (!('salesCount' in data) || (data.salesCount is int && data.salesCount >= 0)) &&
+             (!('favoriteCount' in data) || (data.favoriteCount is int && data.favoriteCount >= 0)) &&
+             (!('pngPath' in data) || (data.pngPath is string && data.pngPath.size() <= 500));
+    }
+
+    function isValidDriftingBottle(data) {
+      return data.authorId is string && data.authorId.size() >= 1 && data.authorId.size() <= 128 &&
+             data.anonymousAlias is string && data.anonymousAlias.size() >= 2 && data.anonymousAlias.size() <= 40 &&
+             data.moodTag is string && data.moodTag.size() >= 1 && data.moodTag.size() <= 32 &&
+             data.content is string && data.content.size() >= 4 && data.content.size() <= 280 &&
+             data.visibility is string && data.visibility == 'public' &&
+             data.expiresAtMillis is int &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             (!('replyContent' in data) || (data.replyContent is string && data.replyContent.size() <= 200));
+    }
+
+    function isValidNotification(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.actorId is string && data.actorId.size() >= 1 && data.actorId.size() <= 128 &&
+             data.actorName is string && data.actorName.size() >= 1 && data.actorName.size() <= 40 &&
+             data.actorAvatarKey is string && data.actorAvatarKey.size() >= 1 && data.actorAvatarKey.size() <= 32 &&
+             data.actorFrameId is string && data.actorFrameId.size() >= 1 && data.actorFrameId.size() <= 64 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             data.subtitle is string && data.subtitle.size() <= 160 &&
+             data.category is string && data.category in ['FOLLOW', 'MENTION', 'COMMUNITY', 'DRIFTING_BOTTLE'] &&
+             data.read is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('targetCommunityId' in data) || (data.targetCommunityId is string && data.targetCommunityId.size() <= 128));
+    }
+
+    // --- COLLECTIONS ---
+
+    // 1. Private User Profile (PII isolated to account owner & App Owner)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAppOwner());
+      allow list: if isSignedIn() && (existing().userId == request.auth.uid || isAppOwner());
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().email == request.auth.token.email &&
+                       incoming().emailVerified == request.auth.token.email_verified &&
+                       incoming().banned == false &&
+                       (incoming().appRankId == 'none' || (isAppOwner() && incoming().appRankId == 'owner')) &&
+                       incoming().keys().hasAll(['userId', 'username', 'email', 'emailVerified', 'avatarFrameId', 'presetAvatarKey', 'communitiesCount', 'followersCount', 'postsCount', 'coinsCount', 'giftsReceivedCount', 'appRankId', 'banned', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'username', 'email', 'emailVerified', 'bio', 'customStatus', 'avatarFrameId', 'presetAvatarKey', 'avatarUrl', 'communitiesCount', 'followersCount', 'postsCount', 'coinsCount', 'giftsReceivedCount', 'donorExp', 'donorLevel', 'totalCoinsDonated', 'dailyStreakDay', 'lastDailyCheckInAtMillis', 'followHostsProgress', 'watchLiveMinutesProgress', 'gameCoinsEarnedProgress', 'giftCoinsSentProgress', 'claimedTaskIds', 'inventoryJson', 'mePlusMember', 'lastMePlusDrawAtMillis', 'maxFrameSlots', 'creatorSalesCount', 'creatorEarningsCoins', 'favoriteFrameIds', 'appRankId', 'banned', 'banReason', 'createdAt', 'updatedAt']) &&
+                       isValidPrivateUser(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidPrivateUser(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().email == existing().email &&
+                       incoming().createdAt == existing().createdAt && (
+                         (isOwner(userId) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['username', 'bio', 'customStatus', 'avatarFrameId', 'presetAvatarKey', 'avatarUrl', 'emailVerified', 'communitiesCount', 'followersCount', 'postsCount', 'coinsCount', 'giftsReceivedCount', 'donorExp', 'donorLevel', 'totalCoinsDonated', 'dailyStreakDay', 'lastDailyCheckInAtMillis', 'followHostsProgress', 'watchLiveMinutesProgress', 'gameCoinsEarnedProgress', 'giftCoinsSentProgress', 'claimedTaskIds', 'inventoryJson', 'mePlusMember', 'lastMePlusDrawAtMillis', 'maxFrameSlots', 'creatorSalesCount', 'creatorEarningsCoins', 'favoriteFrameIds', 'updatedAt'])) ||
+                         (isAppOwner() &&
+                          (incoming().appRankId in ['none', 'moderator', 'influencer'] || (userId == request.auth.uid && incoming().appRankId == 'owner')) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['appRankId', 'banned', 'banReason', 'coinsCount', 'maxFrameSlots', 'updatedAt'])) ||
+                         (incoming().coinsCount > existing().coinsCount &&
+                          incoming().coinsCount <= existing().coinsCount + 100000 &&
+                          (!('creatorSalesCount' in incoming()) || !('creatorSalesCount' in existing()) || incoming().creatorSalesCount >= existing().creatorSalesCount) &&
+                          (!('creatorEarningsCoins' in incoming()) || !('creatorEarningsCoins' in existing()) || incoming().creatorEarningsCoins >= existing().creatorEarningsCoins) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['coinsCount', 'creatorSalesCount', 'creatorEarningsCoins', 'updatedAt']))
+                       );
+
+      allow delete: if false;
+
+      match /notifications/{notifId} {
+        allow get: if isValidId(notifId) && isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(notifId) &&
+                         incoming().userId == userId &&
+                         incoming().actorId == request.auth.uid &&
+                         (isOwner(userId) || isAppOwner() || request.auth.uid == incoming().actorId) &&
+                         incoming().keys().hasAll(['userId', 'actorId', 'actorName', 'actorAvatarKey', 'actorFrameId', 'title', 'subtitle', 'category', 'read', 'createdAt']) &&
+                         incoming().keys().hasOnly(['userId', 'actorId', 'actorName', 'actorAvatarKey', 'actorFrameId', 'title', 'subtitle', 'category', 'targetCommunityId', 'read', 'createdAt']) &&
+                         isValidNotification(incoming());
+        allow update: if isOwner(userId) &&
+                         isValidId(notifId) &&
+                         isValidNotification(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+        allow delete: if isOwner(userId) && isValidId(notifId);
+      }
+    }
+
+    // 2. Public User Profile (No PII; global discovery; ONLY App Owner can grant verified ranks)
+    match /users_public/{userId} {
+      allow get: if isSignedIn() && isValidId(userId);
+      allow list: if isSignedIn() && existing().discoverable == true;
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().discoverable == true &&
+                       incoming().banned == false &&
+                       (incoming().appRankId == 'none' || (isAppOwner() && incoming().appRankId == 'owner')) &&
+                       incoming().keys().hasAll(['userId', 'username', 'discoverable', 'avatarFrameId', 'presetAvatarKey', 'communitiesCount', 'followersCount', 'postsCount', 'giftsReceivedCount', 'appRankId', 'banned', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'username', 'discoverable', 'bio', 'customStatus', 'avatarFrameId', 'presetAvatarKey', 'avatarUrl', 'communitiesCount', 'followersCount', 'postsCount', 'giftsReceivedCount', 'donorExp', 'donorLevel', 'appRankId', 'banned', 'banReason', 'createdAt', 'updatedAt']) &&
+                       isValidPublicUser(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       isValidPublicUser(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().discoverable == existing().discoverable &&
+                       incoming().createdAt == existing().createdAt && (
+                         (isOwner(userId) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['username', 'bio', 'customStatus', 'avatarFrameId', 'presetAvatarKey', 'avatarUrl', 'communitiesCount', 'followersCount', 'postsCount', 'giftsReceivedCount', 'donorExp', 'donorLevel', 'updatedAt'])) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['giftsReceivedCount', 'updatedAt']) &&
+                          incoming().giftsReceivedCount > existing().giftsReceivedCount) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['followersCount', 'updatedAt']) &&
+                          incoming().followersCount > existing().followersCount) ||
+                         (isAppOwner() &&
+                          (incoming().appRankId in ['none', 'moderator', 'influencer'] || (userId == request.auth.uid && incoming().appRankId == 'owner')) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['appRankId', 'banned', 'banReason', 'updatedAt']))
+                       );
+
+      allow delete: if false;
+    }
+
+    // 3. Global Live Communities / IRL & Gamer Rooms
+    match /communities/{communityId} {
+      allow get: if isSignedIn() && isValidId(communityId);
+      allow list: if isSignedIn() && existing().visibility == 'public';
+
+      allow create: if isSignedIn() &&
+                       isValidId(communityId) &&
+                       incoming().creatorId == request.auth.uid &&
+                       incoming().visibility == 'public' &&
+                       incoming().keys().hasAll(['creatorId', 'name', 'category', 'description', 'coverKey', 'badgeLabel', 'visibility', 'memberCount', 'activeVoiceCount', 'voiceLocked', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['creatorId', 'name', 'category', 'description', 'coverKey', 'badgeLabel', 'visibility', 'memberCount', 'activeVoiceCount', 'voiceLocked', 'backgroundUri', 'createdAt', 'updatedAt']) &&
+                       isValidCommunity(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(communityId) &&
+                       isValidCommunity(incoming()) &&
+                       incoming().creatorId == existing().creatorId &&
+                       incoming().visibility == existing().visibility &&
+                       incoming().createdAt == existing().createdAt && (
+                         ((existing().creatorId == request.auth.uid || isRoomCoAdminOrAdmin(communityId) || isAppOwner()) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'description', 'coverKey', 'badgeLabel', 'voiceLocked', 'backgroundUri', 'memberCount', 'activeVoiceCount', 'updatedAt'])) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['memberCount', 'activeVoiceCount', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(communityId) && (existing().creatorId == request.auth.uid || isAppOwner());
+
+      match /members/{userId} {
+        allow get: if isSignedIn() && isValidId(communityId) && isValidId(userId);
+        allow list: if isSignedIn() && isValidId(communityId) && existing().roomVisibility == 'public';
+
+        allow create: if isOwner(userId) &&
+                         isValidId(communityId) &&
+                         isValidId(userId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().communityId == communityId &&
+                         incoming().roomVisibility == 'public' &&
+                         exists(/databases/$(database)/documents/communities/$(communityId)) &&
+                         (incoming().role == 'MEMBER' ||
+                          (incoming().role == 'ADMIN' &&
+                           get(/databases/$(database)/documents/communities/$(communityId)).data.creatorId == request.auth.uid)) &&
+                         incoming().keys().hasAll(['communityId', 'userId', 'role', 'roomVisibility', 'joinedAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'userId', 'role', 'roomVisibility', 'joinedAt', 'updatedAt']) &&
+                         isValidMembership(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(userId) &&
+                         isValidMembership(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().communityId == existing().communityId &&
+                         incoming().roomVisibility == existing().roomVisibility &&
+                         incoming().joinedAt == existing().joinedAt &&
+                         (isRoomAdmin(communityId) || isAppOwner()) &&
+                         incoming().role in ['CO_ADMIN', 'MEMBER'] &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['role', 'updatedAt']);
+
+        allow delete: if isSignedIn() && isValidId(communityId) && isValidId(userId) &&
+                         (isOwner(userId) || isRoomAdmin(communityId) || isAppOwner());
+      }
+
+      match /voice_participants/{userId} {
+        allow get: if isSignedIn() && isValidId(communityId) && isValidId(userId);
+        allow list: if isSignedIn() && isValidId(communityId) && existing().roomVisibility == 'public';
+
+        allow create: if isOwner(userId) &&
+                         isValidId(communityId) &&
+                         isValidId(userId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().communityId == communityId &&
+                         incoming().roomVisibility == 'public' &&
+                         exists(/databases/$(database)/documents/communities/$(communityId)) &&
+                         incoming().keys().hasAll(['communityId', 'userId', 'username', 'presetAvatarKey', 'avatarFrameId', 'appRankId', 'role', 'roomVisibility', 'muted', 'speaking', 'handRaised', 'joinedAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'userId', 'username', 'presetAvatarKey', 'avatarFrameId', 'avatarUrl', 'appRankId', 'role', 'roomVisibility', 'muted', 'speaking', 'handRaised', 'joinedAt', 'updatedAt']) &&
+                         isValidVoiceParticipant(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(userId) &&
+                         isValidVoiceParticipant(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().communityId == existing().communityId &&
+                         incoming().roomVisibility == existing().roomVisibility &&
+                         incoming().joinedAt == existing().joinedAt && (
+                           (isOwner(userId) &&
+                            incoming().diff(existing()).affectedKeys().hasOnly(['muted', 'speaking', 'handRaised', 'username', 'presetAvatarKey', 'avatarFrameId', 'avatarUrl', 'role', 'updatedAt'])) ||
+                           ((isRoomCoAdminOrAdmin(communityId) || isAppOwner()) &&
+                            incoming().diff(existing()).affectedKeys().hasOnly(['muted', 'speaking', 'role', 'updatedAt']))
+                         );
+
+        allow delete: if isSignedIn() && isValidId(communityId) && isValidId(userId) &&
+                         (isOwner(userId) || isRoomAdmin(communityId) || isAppOwner());
+      }
+
+      match /voice_frames/{frameId} {
+        allow get: if isSignedIn() && isValidId(communityId) && isValidId(frameId);
+        allow list: if isSignedIn() && isValidId(communityId) && existing().roomVisibility == 'public';
+
+        allow create: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(frameId) &&
+                         incoming().senderId == request.auth.uid &&
+                         incoming().communityId == communityId &&
+                         incoming().roomVisibility == 'public' &&
+                         incoming().keys().hasAll(['communityId', 'senderId', 'roomVisibility', 'seq', 'sampleRate', 'codec', 'payloadB64', 'rms', 'createdAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'senderId', 'roomVisibility', 'seq', 'sampleRate', 'codec', 'payloadB64', 'rms', 'createdAt']) &&
+                         isValidVoiceFrame(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(frameId) &&
+                         existing().senderId == request.auth.uid &&
+                         incoming().senderId == request.auth.uid &&
+                         incoming().communityId == existing().communityId &&
+                         incoming().roomVisibility == existing().roomVisibility &&
+                         incoming().keys().hasAll(['communityId', 'senderId', 'roomVisibility', 'seq', 'sampleRate', 'codec', 'payloadB64', 'rms', 'createdAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'senderId', 'roomVisibility', 'seq', 'sampleRate', 'codec', 'payloadB64', 'rms', 'createdAt']) &&
+                         isValidVoiceFrame(incoming());
+
+        allow delete: if isSignedIn() && isValidId(communityId) && isValidId(frameId) &&
+                         (existing().senderId == request.auth.uid || isRoomAdmin(communityId) || isAppOwner());
+      }
+
+      match /gifts/{giftId} {
+        allow get: if isSignedIn() && isValidId(communityId) && isValidId(giftId);
+        allow list: if isSignedIn() && isValidId(communityId) && existing().roomVisibility == 'public';
+
+        allow create: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(giftId) &&
+                         incoming().senderId == request.auth.uid &&
+                         incoming().communityId == communityId &&
+                         incoming().roomVisibility == 'public' &&
+                         exists(/databases/$(database)/documents/communities/$(communityId)) &&
+                         incoming().keys().hasAll(['communityId', 'channelType', 'roomVisibility', 'senderId', 'senderName', 'senderAvatarKey', 'senderFrameId', 'recipientId', 'recipientName', 'giftId', 'giftName', 'giftEmoji', 'coinCost', 'comboCount', 'createdAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'channelType', 'roomVisibility', 'senderId', 'senderName', 'senderAvatarKey', 'senderFrameId', 'recipientId', 'recipientName', 'giftId', 'giftName', 'giftEmoji', 'coinCost', 'comboCount', 'createdAt']) &&
+                         isValidRoomGift(incoming());
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(communityId) && isValidId(giftId) &&
+                         (existing().senderId == request.auth.uid || isRoomAdmin(communityId) || isAppOwner());
+      }
+
+      match /messages/{messageId} {
+        allow get: if isSignedIn() && isValidId(communityId) && isValidId(messageId);
+        allow list: if isSignedIn() && isValidId(communityId) &&
+                       existing().roomVisibility == 'public' &&
+                       existing().channelType in ['GROUP', 'VOICE'];
+
+        allow create: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(messageId) &&
+                         incoming().senderId == request.auth.uid &&
+                         incoming().communityId == communityId &&
+                         incoming().roomVisibility == 'public' &&
+                         exists(/databases/$(database)/documents/communities/$(communityId)) &&
+                         incoming().keys().hasAll(['communityId', 'channelType', 'roomVisibility', 'senderId', 'senderName', 'senderAvatarKey', 'senderFrameId', 'senderAppRankId', 'senderRole', 'content', 'reactionCount', 'audioDurationMs', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'channelType', 'roomVisibility', 'senderId', 'senderName', 'senderAvatarKey', 'senderFrameId', 'senderAvatarUrl', 'senderAppRankId', 'senderRole', 'senderStatus', 'content', 'replyToSnippet', 'reactionCount', 'audioUri', 'audioDataB64', 'audioDurationMs', 'createdAt', 'updatedAt']) &&
+                         isValidChatMessage(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(messageId) &&
+                         isValidChatMessage(incoming()) &&
+                         incoming().senderId == existing().senderId &&
+                         incoming().communityId == existing().communityId &&
+                         incoming().channelType == existing().channelType &&
+                         incoming().roomVisibility == existing().roomVisibility &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['reactionCount', 'updatedAt']);
+
+        allow delete: if isSignedIn() && isValidId(communityId) && isValidId(messageId) &&
+                         (existing().senderId == request.auth.uid || isRoomCoAdminOrAdmin(communityId) || isAppOwner());
+      }
+
+      match /events/{eventId} {
+        allow get: if isSignedIn() && isValidId(communityId) && isValidId(eventId);
+        allow list: if isSignedIn() && isValidId(communityId) && existing().roomVisibility == 'public';
+
+        allow create: if isSignedIn() &&
+                         isValidId(communityId) &&
+                         isValidId(eventId) &&
+                         incoming().actorId == request.auth.uid &&
+                         incoming().communityId == communityId &&
+                         incoming().roomVisibility == 'public' &&
+                         exists(/databases/$(database)/documents/communities/$(communityId)) &&
+                         incoming().keys().hasAll(['communityId', 'actorId', 'actorName', 'description', 'roomVisibility', 'createdAt']) &&
+                         incoming().keys().hasOnly(['communityId', 'actorId', 'actorName', 'description', 'roomVisibility', 'createdAt']) &&
+                         isValidRoomEvent(incoming());
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(communityId) && isValidId(eventId) && (isRoomAdmin(communityId) || isAppOwner());
+      }
+    }
+
+    // 4. Global Feed Posts & Comments
+    match /posts/{postId} {
+      allow get: if isSignedIn() && isValidId(postId);
+      allow list: if isSignedIn() && existing().visibility == 'public';
+
+      allow create: if isSignedIn() &&
+                       isValidId(postId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().visibility == 'public' &&
+                       incoming().keys().hasAll(['authorId', 'authorName', 'authorAvatarKey', 'authorFrameId', 'authorAppRankId', 'visibility', 'content', 'likesCount', 'commentsCount', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['authorId', 'authorName', 'authorAvatarKey', 'authorFrameId', 'authorAvatarUrl', 'authorAppRankId', 'communityId', 'communityName', 'visibility', 'content', 'imageUri', 'likesCount', 'commentsCount', 'createdAt', 'updatedAt']) &&
+                       isValidPost(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(postId) &&
+                       isValidPost(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().visibility == existing().visibility &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'commentsCount', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(postId) && (existing().authorId == request.auth.uid || isAppOwner());
+
+      match /comments/{commentId} {
+        allow get: if isSignedIn() && isValidId(postId) && isValidId(commentId);
+        allow list: if isSignedIn() && isValidId(postId) && existing().visibility == 'public';
+
+        allow create: if isSignedIn() &&
+                         isValidId(postId) &&
+                         isValidId(commentId) &&
+                         incoming().authorId == request.auth.uid &&
+                         incoming().postId == postId &&
+                         incoming().visibility == 'public' &&
+                         exists(/databases/$(database)/documents/posts/$(postId)) &&
+                         incoming().keys().hasAll(['postId', 'authorId', 'authorName', 'authorAvatarKey', 'authorFrameId', 'authorAppRankId', 'visibility', 'content', 'createdAt']) &&
+                         incoming().keys().hasOnly(['postId', 'authorId', 'authorName', 'authorAvatarKey', 'authorFrameId', 'authorAppRankId', 'visibility', 'content', 'createdAt']) &&
+                         isValidPostComment(incoming());
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(postId) && isValidId(commentId) && (existing().authorId == request.auth.uid || isAppOwner());
+      }
+    }
+
+    // 5. Community Custom Avatar Frames
+    match /custom_frames/{frameId} {
+      allow get: if isSignedIn() && isValidId(frameId);
+      allow list: if isSignedIn() && existing().visibility == 'public';
+
+      allow create: if isSignedIn() &&
+                       isValidId(frameId) &&
+                       incoming().creatorId == request.auth.uid &&
+                       incoming().visibility == 'public' &&
+                       incoming().keys().hasAll(['creatorId', 'creatorName', 'title', 'frameType', 'primaryColorHex', 'secondaryColorHex', 'stylePatternId', 'thicknessDp', 'sparkles', 'visibility', 'createdAt']) &&
+                       incoming().keys().hasOnly(['creatorId', 'creatorName', 'title', 'frameType', 'pngPath', 'primaryColorHex', 'secondaryColorHex', 'stylePatternId', 'thicknessDp', 'sparkles', 'priceCoins', 'description', 'category', 'isFeatured', 'salesCount', 'favoriteCount', 'visibility', 'createdAt']) &&
+                       isValidCustomFrame(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(frameId) &&
+                       isValidCustomFrame(incoming()) &&
+                       incoming().creatorId == existing().creatorId &&
+                       incoming().visibility == existing().visibility &&
+                       incoming().createdAt == existing().createdAt && (
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['salesCount']) &&
+                          incoming().salesCount == existing().salesCount + 1) ||
+                         (incoming().diff(existing()).affectedKeys().hasOnly(['favoriteCount']) &&
+                          (incoming().favoriteCount == existing().favoriteCount + 1 ||
+                           (incoming().favoriteCount >= 0 && incoming().favoriteCount == existing().favoriteCount - 1)))
+                       );
+      allow delete: if isSignedIn() && isValidId(frameId) && (existing().creatorId == request.auth.uid || isAppOwner());
+    }
+
+    // 6. Global Drifting Bottles
+    match /drifting_bottles/{bottleId} {
+      allow get: if isSignedIn() && isValidId(bottleId);
+      allow list: if isSignedIn() && existing().visibility == 'public';
+
+      allow create: if isSignedIn() &&
+                       isValidId(bottleId) &&
+                       incoming().authorId == request.auth.uid &&
+                       incoming().visibility == 'public' &&
+                       incoming().keys().hasAll(['authorId', 'anonymousAlias', 'moodTag', 'content', 'visibility', 'expiresAtMillis', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['authorId', 'anonymousAlias', 'moodTag', 'content', 'replyContent', 'visibility', 'expiresAtMillis', 'createdAt', 'updatedAt']) &&
+                       isValidDriftingBottle(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(bottleId) &&
+                       isValidDriftingBottle(incoming()) &&
+                       incoming().authorId == existing().authorId &&
+                       incoming().visibility == existing().visibility &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['replyContent', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(bottleId) && (existing().authorId == request.auth.uid || isAppOwner());
+    }
+  }
+}

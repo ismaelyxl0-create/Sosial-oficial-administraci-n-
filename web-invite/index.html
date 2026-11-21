@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexoLive Web & APK v2.1 — Comunidad Global en Vivo</title>
+  <meta name="description" content="Entra a NexoLive directamente desde tu navegador o descarga el APK v2.1 gratis sin Play Store: salas globales, chat en vivo, regalos, misiones y Tienda de Creaciones." />
+  <style>
+    :root {
+      --bg: #0b0914;
+      --bg-elev: #151126;
+      --card: rgba(25, 21, 44, 0.9);
+      --border: rgba(168, 85, 247, 0.34);
+      --pink: #ff4ec2;
+      --purple: #9d4edd;
+      --cyan: #4cc9f0;
+      --gold: #ffd166;
+      --green: #38e59b;
+      --red: #ff5c77;
+      --text: #f8f7ff;
+      --muted: #b5b0cc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at 86% 8%, rgba(157, 78, 221, 0.25), transparent 44%),
+        radial-gradient(circle at 12% 84%, rgba(255, 78, 194, 0.2), transparent 44%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.45;
+      padding-bottom: 84px;
+    }
+    .shell { max-width: 1060px; margin: 0 auto; padding: 16px; }
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(14px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .logo-dot {
+      width: 38px; height: 38px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--cyan), var(--purple), var(--pink));
+      display: grid; place-items: center; font-weight: 900; font-size: 18px;
+      box-shadow: 0 6px 20px rgba(157, 78, 221, 0.45);
+    }
+    .brand h1 { font-size: 1.2rem; font-weight: 900; letter-spacing: 0.2px; }
+    .brand small { color: var(--cyan); font-weight: 700; display: block; font-size: 0.74rem; }
+    .top-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 12px; border-radius: 999px; font-weight: 800; font-size: 0.82rem;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border);
+    }
+    .pill.gold { color: var(--gold); border-color: rgba(255, 209, 102, 0.45); background: rgba(255, 209, 102, 0.12); }
+    .pill.cyan { color: var(--cyan); border-color: rgba(76, 201, 240, 0.45); }
+    .btn {
+      cursor: pointer; border: none; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 18px; border-radius: 999px; font-weight: 800; font-size: 0.9rem;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(90deg, var(--purple), var(--pink)); color: #fff; box-shadow: 0 8px 22px rgba(255, 78, 194, 0.3); }
+    .btn-cyan { background: rgba(76, 201, 240, 0.16); color: var(--cyan); border: 1px solid var(--cyan); }
+    .btn-gold { background: rgba(255, 209, 102, 0.16); color: var(--gold); border: 1px solid var(--gold); }
+    .btn-ghost { background: rgba(255, 255, 255, 0.07); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: rgba(255, 92, 119, 0.18); color: var(--red); border: 1px solid var(--red); }
+    .btn-sm { padding: 7px 12px; font-size: 0.78rem; }
+
+    .hero {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: 24px;
+      padding: 28px 22px;
+      text-align: center;
+      margin-bottom: 18px;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.45);
+    }
+    .badge {
+      display: inline-block; padding: 5px 13px; border-radius: 999px;
+      background: rgba(76, 201, 240, 0.14); border: 1px solid var(--cyan);
+      color: var(--cyan); font-weight: 800; font-size: 0.76rem; margin-bottom: 12px;
+    }
+    .hero h2 {
+      font-size: 2rem; font-weight: 900; margin-bottom: 8px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p { color: var(--muted); max-width: 620px; margin: 0 auto 18px; font-size: 0.96rem; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+    .alert {
+      padding: 12px 15px; border-radius: 14px; font-size: 0.86rem; font-weight: 600;
+      margin-bottom: 14px; display: none;
+    }
+    .alert.show { display: block; }
+    .alert.info { background: rgba(76, 201, 240, 0.14); border: 1px solid var(--cyan); color: #dff7ff; }
+    .alert.warn { background: rgba(255, 209, 102, 0.14); border: 1px solid var(--gold); color: #fff4d2; }
+    .alert.err { background: rgba(255, 92, 119, 0.16); border: 1px solid var(--red); color: #ffd9e0; }
+    .alert.ok { background: rgba(56, 229, 155, 0.15); border: 1px solid var(--green); color: #d9fff0; }
+
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.03); padding: 8px; border-radius: 16px; border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1 1 110px; cursor: pointer; border: none; border-radius: 12px;
+      padding: 10px 12px; font-weight: 800; font-size: 0.84rem;
+      background: transparent; color: var(--muted);
+    }
+    .tab-btn.active {
+      background: linear-gradient(90deg, rgba(157, 78, 221, 0.35), rgba(255, 78, 194, 0.35));
+      color: var(--text); border: 1px solid rgba(255, 78, 194, 0.5);
+    }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 16px;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 6px; color: var(--text); }
+    .muted { color: var(--muted); font-size: 0.85rem; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .row-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+    input, select, textarea {
+      width: 100%; background: rgba(10, 8, 20, 0.85); color: var(--text);
+      border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+      font-size: 0.9rem; font-family: inherit;
+    }
+    textarea { min-height: 76px; resize: vertical; }
+    label.lbl { display: block; font-size: 0.78rem; color: var(--muted); font-weight: 700; margin: 10px 0 4px; }
+
+    .avatar-ring {
+      width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+      display: grid; place-items: center; font-weight: 900; font-size: 1.1rem;
+      background: #231b3d; border: 3px solid var(--cyan);
+      box-shadow: 0 0 14px rgba(76, 201, 240, 0.35);
+    }
+    .rank-tag {
+      display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 800;
+      background: rgba(255, 209, 102, 0.16); color: var(--gold); border: 1px solid rgba(255, 209, 102, 0.5);
+    }
+    .chat-box {
+      max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
+      padding: 12px; background: rgba(9, 7, 18, 0.75); border-radius: 14px; border: 1px solid var(--border);
+      margin: 12px 0;
+    }
+    .msg {
+      padding: 9px 12px; border-radius: 14px; background: rgba(157, 78, 221, 0.15);
+      border: 1px solid rgba(157, 78, 221, 0.28); max-width: 88%;
+    }
+    .msg.mine { align-self: flex-end; background: rgba(76, 201, 240, 0.15); border-color: rgba(76, 201, 240, 0.35); }
+    .msg .meta { font-size: 0.74rem; color: var(--cyan); font-weight: 800; margin-bottom: 2px; }
+    .hidden { display: none !important; }
+    .section-title { font-size: 1.08rem; font-weight: 900; color: var(--cyan); margin: 14px 0 10px; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-dot">N</div>
+        <div>
+          <h1>NexoLive</h1>
+          <small>App Web + Descarga APK v2.1 Gratis Mundial</small>
+        </div>
+      </div>
+      <div class="top-actions">
+        <a class="btn btn-cyan btn-sm" href="./NexoLive-v2.1.apk" download>⬇️ APK v2.1 Gratis</a>
+        <span id="coinBadge" class="pill gold hidden">💎 100</span>
+        <button id="loginTopBtn" class="btn btn-primary btn-sm">🔐 Entrar con Google</button>
+        <button id="logoutTopBtn" class="btn btn-ghost btn-sm hidden">Salir</button>
+      </div>
+    </header>
+
+    <div id="envWarning" class="alert warn"></div>
+    <div id="inviterBanner" class="alert info"></div>
+    <div id="statusToast" class="alert"></div>
+
+    <!-- Landing Hero (always shown before login; collapsible/compact after login) -->
+    <section id="landingHero" class="hero">
+      <div class="badge">🌍 VERSIÓN v2.1 • WEB INTERACTIVA + APK SIN PLAY STORE</div>
+      <h2>Conéctate con el Mundo en NexoLive</h2>
+      <p>
+        Úsala directamente aquí en tu navegador o descarga la app oficial para Android sin Play Store.
+        Misma cuenta Google, mismas salas globales, monedas y Tienda de Creaciones en tiempo real.
+      </p>
+      <div class="cta-row">
+        <button id="heroLoginBtn" class="btn btn-primary">🌐 Entrar a NexoLive Web (Google)</button>
+        <a class="btn btn-cyan" href="./NexoLive-v2.1.apk" download>⬇️ Descargar APK Android (v2.1)</a>
+        <a class="btn btn-ghost" href="nexolive://invite">📱 Abrir App Instalada</a>
+      </div>
+    </section>
+
+    <!-- Authenticated Interactive Web Application -->
+    <main id="appRoot" class="hidden">
+      <nav class="tabs" aria-label="Navegación principal">
+        <button class="tab-btn active" data-tab="live">🎙️ Salas y Usuarios</button>
+        <button class="tab-btn" data-tab="store">🏪 Tienda Creaciones</button>
+        <button class="tab-btn" data-tab="feed">📰 Clips</button>
+        <button class="tab-btn" data-tab="bottles">🫧 Botellas</button>
+        <button class="tab-btn" data-tab="profile">👤 Mi Perfil</button>
+      </nav>
+
+      <!-- TAB: SALAS Y USUARIOS -->
+      <section id="tab-live" class="tab-panel">
+        <div class="grid">
+          <div class="card">
+            <div class="row">
+              <h3>🌐 Salas Públicas en Vivo</h3>
+              <button id="toggleNewRoomBtn" class="btn btn-cyan btn-sm">+ Crear Sala</button>
+            </div>
+            <div id="newRoomForm" class="hidden" style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border);">
+              <label class="lbl">Nombre de la sala (3-40)</label>
+              <input id="roomNameInput" placeholder="Ej. Música y Amigos Global" maxlength="40" />
+              <label class="lbl">Categoría</label>
+              <select id="roomCatInput">
+                <option>Música</option><option>IRL</option><option>Gaming</option><option>Idiomas</option><option>Comunidad</option>
+              </select>
+              <label class="lbl">Descripción</label>
+              <input id="roomDescInput" placeholder="Bienvenidos de cualquier país..." maxlength="200" />
+              <div style="margin-top:10px;"><button id="createRoomSubmitBtn" class="btn btn-primary btn-sm">Publicar Sala</button></div>
+            </div>
+            <div id="roomsList" style="margin-top:12px; display:flex; flex-direction:column; gap:10px;"></div>
+          </div>
+
+          <div class="card">
+            <h3 id="activeRoomTitle">💬 Chat de Sala</h3>
+            <p id="activeRoomSub" class="muted">Elige una sala para chatear en tiempo real con usuarios de la app y la web.</p>
+            <div id="roomChatBox" class="chat-box"></div>
+            <div class="row" style="margin-top:8px;">
+              <input id="chatMsgInput" placeholder="Escribe un mensaje a la sala..." maxlength="500" />
+              <button id="sendChatBtn" class="btn btn-primary btn-sm">Enviar</button>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="section-title">🔎 Buscar Personas en Todo el Mundo</h3>
+        <div class="card">
+          <input id="userSearchInput" placeholder="Busca por nombre de usuario (ej. abukeje26)..." />
+          <div id="usersGrid" class="grid" style="margin-top:12px;"></div>
+        </div>
+      </section>
+
+      <!-- TAB: TIENDA DE CREACIONES -->
+      <section id="tab-store" class="tab-panel hidden">
+        <div class="row-wrap" style="margin-bottom:12px;">
+          <button class="btn btn-primary btn-sm store-sub-btn" data-sub="catalog">🛒 Catálogo</button>
+          <button class="btn btn-ghost btn-sm store-sub-btn" data-sub="workshop">🎨 Mi Taller y Cupos</button>
+        </div>
+
+        <div id="store-catalog">
+          <div class="card" style="margin-bottom:12px;">
+            <div class="row-wrap">
+              <input id="frameSearchInput" style="flex:1 1 200px;" placeholder="Buscar diseño o creador..." />
+              <select id="frameCatFilter" style="flex:0 1 190px;">
+                <option value="Todas">Todas las categorías</option>
+                <option>Marco de perfil</option>
+                <option>Marco de mensajes</option>
+                <option>Aura</option>
+                <option>Fondo</option>
+                <option>Paquete</option>
+              </select>
+            </div>
+          </div>
+          <div id="framesGrid" class="grid"></div>
+        </div>
+
+        <div id="store-workshop" class="hidden">
+          <div class="grid">
+            <div class="card">
+              <h3>📦 Sistema de Cupos Permanentes</h3>
+              <p id="cupoSummaryText" class="muted" style="margin:6px 0 12px;"></p>
+              <div id="cupoTiersList" style="display:flex; flex-direction:column; gap:8px;"></div>
+            </div>
+            <div class="card">
+              <h3>✨ Crear Nuevo Diseño</h3>
+              <p class="muted">Individual: 💎 50 • Paquete: 💎 150 • Destacar (+7 días): +💎 200 (gratis para Dueño o Rango Nv.3+).</p>
+              <label class="lbl">Nombre del diseño (2-30)</label>
+              <input id="designTitleInput" maxlength="30" placeholder="Ej. Dragón Dorado" />
+              <label class="lbl">Descripción / Estilo</label>
+              <input id="designDescInput" maxlength="100" placeholder="Brillo épico 3D para tu avatar" />
+              <label class="lbl">Categoría</label>
+              <select id="designCatInput">
+                <option>Marco de perfil</option>
+                <option>Marco de mensajes</option>
+                <option>Aura</option>
+                <option>Fondo</option>
+                <option>Paquete</option>
+              </select>
+              <div class="row" style="margin-top:8px;">
+                <div style="flex:1;">
+                  <label class="lbl">Precio de venta (💎 20-500)</label>
+                  <input id="designPriceInput" type="number" min="20" max="500" value="100" />
+                </div>
+                <div style="flex:1;">
+                  <label class="lbl">Color Principal</label>
+                  <input id="designColorInput" type="color" value="#ffd166" style="height:42px; padding:4px;" />
+                </div>
+              </div>
+              <label class="row-wrap" style="margin-top:10px; font-size:0.85rem; cursor:pointer;">
+                <input id="designFeaturedChk" type="checkbox" style="width:auto;" />
+                <span>🌟 Destacar en portada (+💎 200)</span>
+              </label>
+              <div style="margin-top:12px;">
+                <button id="publishDesignBtn" class="btn btn-primary">Publicar Diseño en Tienda</button>
+              </div>
+            </div>
+          </div>
+          <h3 class="section-title">🧑‍🎨 Mis Diseños Publicados</h3>
+          <div id="myDesignsGrid" class="grid"></div>
+        </div>
+      </section>
+
+      <!-- TAB: CLIPS / FEED -->
+      <section id="tab-feed" class="tab-panel hidden">
+        <div class="card" style="margin-bottom:14px;">
+          <h3>✍️ Publicar en el Feed Mundial</h3>
+          <textarea id="postContentInput" placeholder="Comparte algo con usuarios de todo el mundo..." maxlength="480" style="margin-top:8px;"></textarea>
+          <div style="margin-top:10px;"><button id="publishPostBtn" class="btn btn-primary btn-sm">Publicar Clip</button></div>
+        </div>
+        <div id="postsList" class="grid"></div>
+      </section>
+
+      <!-- TAB: BOTELLAS -->
+      <section id="tab-bottles" class="tab-panel hidden">
+        <div class="card" style="margin-bottom:14px;">
+          <h3>🫧 Lanzar Botella Anónima al Mar Global</h3>
+          <div class="row-wrap" style="margin-top:8px;">
+            <input id="bottleAliasInput" placeholder="Alias anónimo" style="flex:1 1 160px;" maxlength="30" />
+            <select id="bottleMoodInput" style="flex:0 1 160px;">
+              <option>Chill 🌙</option><option>Feliz ✨</option><option>Música 🎧</option><option>Confesión 🫧</option>
+            </select>
+          </div>
+          <textarea id="bottleContentInput" placeholder="Escribe un mensaje para alguien en otra parte del mundo..." maxlength="260" style="margin-top:8px;"></textarea>
+          <div style="margin-top:10px;"><button id="throwBottleBtn" class="btn btn-cyan btn-sm">Lanzar Botella</button></div>
+        </div>
+        <div id="bottlesList" class="grid"></div>
+      </section>
+
+      <!-- TAB: MI PERFIL -->
+      <section id="tab-profile" class="tab-panel hidden">
+        <div class="grid">
+          <div class="card">
+            <div class="row-wrap">
+              <div id="myAvatarRing" class="avatar-ring">N</div>
+              <div>
+                <h3 id="myNameText">@usuario</h3>
+                <div id="myRankLine" class="muted"></div>
+              </div>
+            </div>
+            <label class="lbl">Nombre visible (2-30)</label>
+            <input id="profileNameInput" maxlength="30" />
+            <label class="lbl">Bio / País</label>
+            <input id="profileBioInput" maxlength="160" placeholder="De qué país nos visitas..." />
+            <div class="row-wrap" style="margin-top:12px;">
+              <button id="saveProfileBtn" class="btn btn-primary btn-sm">Guardar Perfil</button>
+              <button id="dailyCheckInBtn" class="btn btn-gold btn-sm">🎁 Check-In Diario (+💎)</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>🌐 Invitar a Más Personas</h3>
+            <p class="muted" style="margin:6px 0 10px;">
+              Comparte este enlace para que cualquiera entre por la web o descargue el APK gratis sin Play Store:
+            </p>
+            <input id="shareLinkBox" readonly />
+            <div class="row-wrap" style="margin-top:10px;">
+              <button id="copyInviteBtn" class="btn btn-cyan btn-sm">📋 Copiar Invitación</button>
+              <a class="btn btn-ghost btn-sm" href="./NexoLive-v2.1.apk" download>⬇️ Descargar APK v2.1</a>
+            </div>
+            <p class="muted" style="margin-top:12px; font-size:0.78rem;">
+              Economía justa: solo el Dueño verificado (abukeje26@gmail.com) tiene monedas ∞ y puede regalar monedas. Los demás ganan con check-in, misiones, regalos y ventas en Tienda.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc,
+      onSnapshot, query, where, orderBy, limit, serverTimestamp, increment
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    // Misma configuración y base de datos que la app Android (gen-lang-client-0991338776)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUYsCsTfu7wM11dzhn-9TXp3vWR4bjotw",
+      authDomain: "gen-lang-client-0991338776.firebaseapp.com",
+      projectId: "gen-lang-client-0991338776",
+      storageBucket: "gen-lang-client-0991338776.firebasestorage.app",
+      messagingSenderId: "352138151947",
+      appId: "1:352138151947:web:nexolive21"
+    };
+    const DATABASE_ID = "ai-studio-android-txlsocia-b508124b-da7e-4108-97ed-0a93693b1ca3";
+    const PRIMARY_OWNER_EMAIL = "abukeje26@gmail.com";
+
+    const CUPO_TIERS = [
+      { level: 0, maxSlots: 10, cost: 0, label: "🟢 Inicial (10 marcos)" },
+      { level: 1, maxSlots: 20, cost: 150, label: "🟡 Nivel 1 (20 marcos • +10)" },
+      { level: 2, maxSlots: 35, cost: 400, label: "🟠 Nivel 2 (35 marcos • +15)" },
+      { level: 3, maxSlots: 55, cost: 800, label: "🔴 Nivel 3 (55 marcos • +20)" },
+      { level: 4, maxSlots: 80, cost: 1400, label: "🟣 Nivel 4 (80 marcos • +25)" },
+      { level: 5, maxSlots: 120, cost: 2500, label: "🔵 Máximo (120 marcos • +40)" }
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app, DATABASE_ID);
+    const provider = new GoogleAuthProvider();
+
+    let currentAuthUser = null;
+    let currentProfile = null;
+    let allPublicUsers = [];
+    let allRooms = [];
+    let allFrames = [];
+    let activeRoom = null;
+    let unsubRoomMsgs = null;
+    let unsubs = [];
+
+    const $ = (id) => document.getElementById(id);
+
+    function toast(msg, kind = "ok") {
+      const el = $("statusToast");
+      el.className = `alert show ${kind}`;
+      el.textContent = msg;
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove("show"), 4500);
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function isOwnerUser(authUser, priv) {
+      return Boolean(
+        authUser &&
+        authUser.emailVerified === true &&
+        String(authUser.email || "").toLowerCase() === PRIMARY_OWNER_EMAIL
+      ) || Boolean(priv && priv.appRankId === "owner" && authUser?.email?.toLowerCase() === PRIMARY_OWNER_EMAIL);
+    }
+
+    function creatorRankFor(sales) {
+      if (sales >= 201) return { level: 4, feeDisc: 40, sharePct: 85, freeFeat: true, name: "Nv.4 Leyenda (-40% tarifa, 85%)" };
+      if (sales >= 51) return { level: 3, feeDisc: 25, sharePct: 80, freeFeat: true, name: "Nv.3 Pro (-25% tarifa + Destacado gratis)" };
+      if (sales >= 11) return { level: 2, feeDisc: 10, sharePct: 80, freeFeat: false, name: "Nv.2 Avanzado (-10% tarifa)" };
+      return { level: 1, feeDisc: 0, sharePct: 80, freeFeat: false, name: "Nv.1 Inicial (80% ganancias)" };
+    }
+
+    // Check file:// protocol + invite param
+    if (window.location.protocol === "file:") {
+      const ew = $("envWarning");
+      ew.classList.add("show");
+      ew.textContent = "⚠️ Estás abriendo este HTML como archivo local (file://). Para usar Google Sign-In en la web, súbelo gratis a Firebase Hosting, Netlify Drop o GitHub Pages; el botón de descarga APK funciona desde cualquier lugar.";
+    }
+    const params = new URLSearchParams(window.location.search);
+    const inviter = params.get("by");
+    if (inviter) {
+      const ib = $("inviterBanner");
+      ib.classList.add("show");
+      ib.textContent = `✨ Invitación directa de @${inviter} — Entra por Google aquí o descarga el APK v2.1 para unirte.`;
+    }
+
+    // Login / Logout
+    async function handleGoogleLogin() {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (e) {
+        toast("Error al iniciar sesión con Google: " + (e.message || e.code), "err");
+      }
+    }
+    $("loginTopBtn").onclick = handleGoogleLogin;
+    $("heroLoginBtn").onclick = handleGoogleLogin;
+    $("logoutTopBtn").onclick = () => signOut(auth);
+
+    // Tabs
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const target = btn.dataset.tab;
+        document.querySelectorAll(".tab-panel").forEach((p) => p.classList.add("hidden"));
+        $("tab-" + target).classList.remove("hidden");
+      };
+    });
+    document.querySelectorAll(".store-sub-btn").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".store-sub-btn").forEach((b) => b.className = "btn btn-ghost btn-sm store-sub-btn");
+        btn.className = "btn btn-primary btn-sm store-sub-btn";
+        const sub = btn.dataset.sub;
+        $("store-catalog").classList.toggle("hidden", sub !== "catalog");
+        $("store-workshop").classList.toggle("hidden", sub !== "workshop");
+      };
+    });
+
+    async function ensureUserDocs(authUser) {
+      const uid = authUser.uid;
+      const owner = isOwnerUser(authUser, null);
+      const privRef = doc(db, "users", uid);
+      const pubRef = doc(db, "users_public", uid);
+      const privSnap = await getDoc(privRef);
+      const cleanName = (authUser.displayName || authUser.email?.split("@")[0] || "Usuario").trim().slice(0, 30);
+      const safeName = cleanName.length >= 2 ? cleanName : "UsuarioNexo";
+
+      if (!privSnap.exists()) {
+        const initCoins = owner ? 999999999 : 100;
+        const initRank = owner ? "owner" : "none";
+        await setDoc(privRef, {
+          userId: uid,
+          username: safeName,
+          email: authUser.email || "",
+          emailVerified: Boolean(authUser.emailVerified),
+          bio: "",
+          customStatus: owner ? "Dueño NexoLive" : "Explorando NexoLive Web",
+          avatarFrameId: "neon_pulse",
+          presetAvatarKey: "anime",
+          communitiesCount: 0,
+          followersCount: 0,
+          postsCount: 0,
+          coinsCount: initCoins,
+          giftsReceivedCount: 0,
+          donorExp: 0,
+          donorLevel: 1,
+          totalCoinsDonated: 0,
+          dailyStreakDay: 0,
+          lastDailyCheckInAtMillis: 0,
+          followHostsProgress: 0,
+          watchLiveMinutesProgress: 0,
+          gameCoinsEarnedProgress: 0,
+          giftCoinsSentProgress: 0,
+          claimedTaskIds: "",
+          inventoryJson: "{}",
+          mePlusMember: false,
+          lastMePlusDrawAtMillis: 0,
+          maxFrameSlots: 10,
+          creatorSalesCount: 0,
+          creatorEarningsCoins: 0,
+          favoriteFrameIds: "",
+          appRankId: initRank,
+          banned: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+      const pubSnap = await getDoc(pubRef);
+      if (!pubSnap.exists()) {
+        await setDoc(pubRef, {
+          userId: uid,
+          username: safeName,
+          discoverable: true,
+          bio: "",
+          customStatus: owner ? "Dueño NexoLive" : "Explorando NexoLive Web",
+          avatarFrameId: "neon_pulse",
+          presetAvatarKey: "anime",
+          communitiesCount: 0,
+          followersCount: 0,
+          postsCount: 0,
+          giftsReceivedCount: 0,
+          donorExp: 0,
+          donorLevel: 1,
+          appRankId: owner ? "owner" : "none",
+          banned: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+    }
+
+    function clearListeners() {
+      unsubs.forEach((u) => { try { u(); } catch (_) {} });
+      unsubs = [];
+      if (unsubRoomMsgs) { try { unsubRoomMsgs(); } catch (_) {} unsubRoomMsgs = null; }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      clearListeners();
+      currentAuthUser = user;
+      if (!user) {
+        currentProfile = null;
+        $("appRoot").classList.add("hidden");
+        $("landingHero").classList.remove("hidden");
+        $("loginTopBtn").classList.remove("hidden");
+        $("logoutTopBtn").classList.add("hidden");
+        $("coinBadge").classList.add("hidden");
+        return;
+      }
+      if (!user.emailVerified) {
+        toast("Tu cuenta de Google debe tener correo verificado.", "err");
+        await signOut(auth);
+        return;
+      }
+      try {
+        await ensureUserDocs(user);
+      } catch (e) {
+        toast("Error al inicializar perfil en Firestore: " + e.message, "err");
+        return;
+      }
+      $("landingHero").classList.add("hidden");
+      $("appRoot").classList.remove("hidden");
+      $("loginTopBtn").classList.add("hidden");
+      $("logoutTopBtn").classList.remove("hidden");
+      $("coinBadge").classList.remove("hidden");
+      startRealtimeStreams(user);
+    });
+
+    function startRealtimeStreams(authUser) {
+      const uid = authUser.uid;
+      unsubs.push(onSnapshot(doc(db, "users", uid), (snap) => {
+        if (!snap.exists()) return;
+        currentProfile = snap.data();
+        renderProfile();
+        renderWorkshop();
+        renderFrames();
+      }));
+
+      unsubs.push(onSnapshot(query(collection(db, "users_public"), where("discoverable", "==", true), limit(80)), (snap) => {
+        allPublicUsers = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderUsers();
+      }));
+
+      unsubs.push(onSnapshot(query(collection(db, "communities"), where("visibility", "==", "public"), limit(50)), (snap) => {
+        allRooms = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderRooms();
+        if (!activeRoom && allRooms.length > 0) selectRoom(allRooms[0]);
+      }));
+
+      unsubs.push(onSnapshot(query(collection(db, "custom_frames"), where("visibility", "==", "public"), limit(100)), (snap) => {
+        allFrames = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderFrames();
+        renderWorkshop();
+      }));
+
+      unsubs.push(onSnapshot(query(collection(db, "posts"), where("visibility", "==", "public"), limit(40)), (snap) => {
+        const posts = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        renderPosts(posts);
+      }));
+
+      unsubs.push(onSnapshot(query(collection(db, "drifting_bottles"), where("visibility", "==", "public"), limit(30)), (snap) => {
+        const now = Date.now();
+        const bottles = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          .filter((b) => (b.expiresAtMillis || 0) > now);
+        renderBottles(bottles);
+      }));
+    }
+
+    function renderProfile() {
+      if (!currentProfile || !currentAuthUser) return;
+      const owner = isOwnerUser(currentAuthUser, currentProfile);
+      $("coinBadge").textContent = owner ? "💎 ∞" : `💎 ${currentProfile.coinsCount ?? 0}`;
+      $("myAvatarRing").textContent = (currentProfile.username || "U")[0].toUpperCase();
+      $("myNameText").textContent = currentProfile.username || "Usuario";
+      const rankLabel = owner ? "👑 Dueño Principal" : (currentProfile.appRankId === "moderator" ? "🛡️ Moderador" : currentProfile.appRankId === "influencer" ? "✨ Influencer" : "👤 Usuario");
+      $("myRankLine").textContent = `${rankLabel} • Donador Nv.${currentProfile.donorLevel || 1} • ${currentProfile.email || ""}`;
+      if (!$("profileNameInput").matches(":focus")) $("profileNameInput").value = currentProfile.username || "";
+      if (!$("profileBioInput").matches(":focus")) $("profileBioInput").value = currentProfile.bio || "";
+      const baseUrl = window.location.origin !== "null" ? (window.location.origin + window.location.pathname) : window.location.href.split("?")[0];
+      $("shareLinkBox").value = `${baseUrl}?by=${encodeURIComponent(currentProfile.username || "NexoLive")}`;
+    }
+
+    function renderUsers() {
+      const q = $("userSearchInput").value.trim().toLowerCase();
+      const filtered = allPublicUsers.filter((u) =>
+        !q || (u.username || "").toLowerCase().includes(q) || (u.bio || "").toLowerCase().includes(q)
+      );
+      const amOwner = isOwnerUser(currentAuthUser, currentProfile);
+      const grid = $("usersGrid");
+      if (filtered.length === 0) {
+        grid.innerHTML = `<p class="muted">No hay usuarios que coincidan todavía.</p>`;
+        return;
+      }
+      grid.innerHTML = filtered.map((u) => {
+        const badge = u.appRankId === "owner" ? "👑 Dueño" : u.appRankId === "moderator" ? "🛡️ Mod" : u.appRankId === "influencer" ? "✨ Influencer" : "";
+        const ownerCtrls = (amOwner && u.userId !== currentAuthUser?.uid) ? `
+          <div class="row-wrap" style="margin-top:8px;">
+            <button class="btn btn-gold btn-sm gift-coin-btn" data-uid="${esc(u.userId)}" data-amt="100">+100 💎</button>
+            <button class="btn btn-gold btn-sm gift-coin-btn" data-uid="${esc(u.userId)}" data-amt="500">+500 💎</button>
+            <button class="btn btn-cyan btn-sm rank-btn" data-uid="${esc(u.userId)}" data-rank="moderator">Mod</button>
+            <button class="btn btn-danger btn-sm ban-btn" data-uid="${esc(u.userId)}" data-banned="${!u.banned}">${u.banned ? "Quitar Ban" : "Ban"}</button>
+          </div>` : "";
+        return `
+          <div class="card">
+            <div class="row-wrap">
+              <div class="avatar-ring">${esc((u.username || "U")[0].toUpperCase())}</div>
+              <div style="flex:1;">
+                <div class="row-wrap">
+                  <strong>${esc(u.username)}</strong>
+                  ${badge ? `<span class="rank-tag">${badge}</span>` : ""}
+                </div>
+                <div class="muted">${esc(u.bio || u.customStatus || "Activo en NexoLive")} • Nv.${u.donorLevel || 1}</div>
+              </div>
+            </div>
+            ${ownerCtrls}
+          </div>`;
+      }).join("");
+
+      grid.querySelectorAll(".gift-coin-btn").forEach((btn) => {
+        btn.onclick = async () => {
+          const uid = btn.dataset.uid;
+          const amt = Number(btn.dataset.amt);
+          try {
+            await updateDoc(doc(db, "users", uid), { coinsCount: increment(amt), updatedAt: serverTimestamp() });
+            toast(`Regalaste +${amt} monedas 💎`);
+          } catch (e) { toast("Error al regalar monedas: " + e.message, "err"); }
+        };
+      });
+      grid.querySelectorAll(".rank-btn").forEach((btn) => {
+        btn.onclick = async () => {
+          const uid = btn.dataset.uid;
+          try {
+            await updateDoc(doc(db, "users", uid), { appRankId: btn.dataset.rank, updatedAt: serverTimestamp() });
+            await updateDoc(doc(db, "users_public", uid), { appRankId: btn.dataset.rank, updatedAt: serverTimestamp() });
+            toast("Rango actualizado en tiempo real.");
+          } catch (e) { toast("Error al cambiar rango: " + e.message, "err"); }
+        };
+      });
+      grid.querySelectorAll(".ban-btn").forEach((btn) => {
+        btn.onclick = async () => {
+          const uid = btn.dataset.uid;
+          const banned = btn.dataset.banned === "true";
+          try {
+            await updateDoc(doc(db, "users", uid), { banned, updatedAt: serverTimestamp() });
+            await updateDoc(doc(db, "users_public", uid), { banned, updatedAt: serverTimestamp() });
+            toast(banned ? "Usuario suspendido." : "Suspensión retirada.");
+          } catch (e) { toast("Error: " + e.message, "err"); }
+        };
+      });
+    }
+    $("userSearchInput").oninput = renderUsers;
+
+    function renderRooms() {
+      const box = $("roomsList");
+      if (allRooms.length === 0) {
+        box.innerHTML = `<p class="muted">No hay salas creadas todavía. ¡Crea la primera arriba!</p>`;
+        return;
+      }
+      box.innerHTML = allRooms.map((r) => `
+        <div class="card" style="padding:12px; border-color:${activeRoom?.id === r.id ? 'var(--cyan)' : 'var(--border)'};">
+          <div class="row">
+            <div>
+              <strong>${esc(r.name)}</strong>
+              <div class="muted">${esc(r.category)} • ${r.memberCount || 1} miembros</div>
+            </div>
+            <button class="btn btn-cyan btn-sm join-room-btn" data-id="${esc(r.id)}">Entrar</button>
+          </div>
+        </div>
+      `).join("");
+      box.querySelectorAll(".join-room-btn").forEach((b) => {
+        b.onclick = () => {
+          const room = allRooms.find((x) => x.id === b.dataset.id);
+          if (room) selectRoom(room);
+        };
+      });
+    }
+
+    function selectRoom(room) {
+      activeRoom = room;
+      renderRooms();
+      $("activeRoomTitle").textContent = `💬 ${room.name}`;
+      $("activeRoomSub").textContent = room.description || room.category;
+      if (unsubRoomMsgs) unsubRoomMsgs();
+      const q = query(
+        collection(db, "communities", room.id, "messages"),
+        where("roomVisibility", "==", "public"),
+        limit(50)
+      );
+      unsubRoomMsgs = onSnapshot(q, (snap) => {
+        const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+        const box = $("roomChatBox");
+        box.innerHTML = msgs.length === 0
+          ? `<p class="muted">Sé el primero en saludar en esta sala...</p>`
+          : msgs.map((m) => `
+            <div class="msg ${m.senderId === currentAuthUser?.uid ? 'mine' : ''}">
+              <div class="meta">${esc(m.senderName)} ${m.senderAppRankId === 'owner' ? '👑' : ''}</div>
+              <div>${esc(m.content)}</div>
+            </div>
+          `).join("");
+        box.scrollTop = box.scrollHeight;
+      });
+    }
+
+    $("toggleNewRoomBtn").onclick = () => $("newRoomForm").classList.toggle("hidden");
+    $("createRoomSubmitBtn").onclick = async () => {
+      if (!currentAuthUser || !currentProfile) return;
+      const name = $("roomNameInput").value.trim();
+      const desc = $("roomDescInput").value.trim() || "Sala global en NexoLive";
+      if (name.length < 3) return toast("El nombre de la sala debe tener al menos 3 letras.", "err");
+      try {
+        const ref = await addDoc(collection(db, "communities"), {
+          creatorId: currentAuthUser.uid,
+          name,
+          category: $("roomCatInput").value,
+          description: desc,
+          coverKey: "irl",
+          badgeLabel: "nueva",
+          visibility: "public",
+          memberCount: 1,
+          activeVoiceCount: 0,
+          voiceLocked: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        await setDoc(doc(db, "communities", ref.id, "members", currentAuthUser.uid), {
+          communityId: ref.id,
+          userId: currentAuthUser.uid,
+          role: "ADMIN",
+          roomVisibility: "public",
+          joinedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        $("roomNameInput").value = "";
+        $("roomDescInput").value = "";
+        $("newRoomForm").classList.add("hidden");
+        toast("Sala pública creada.");
+      } catch (e) { toast("Error al crear sala: " + e.message, "err"); }
+    };
+
+    $("sendChatBtn").onclick = async () => {
+      if (!activeRoom || !currentAuthUser || !currentProfile) return toast("Selecciona una sala primero.", "warn");
+      const text = $("chatMsgInput").value.trim();
+      if (!text) return;
+      try {
+        await addDoc(collection(db, "communities", activeRoom.id, "messages"), {
+          communityId: activeRoom.id,
+          channelType: "GROUP",
+          roomVisibility: "public",
+          senderId: currentAuthUser.uid,
+          senderName: (currentProfile.username || "Usuario").slice(0, 30),
+          senderAvatarKey: currentProfile.presetAvatarKey || "anime",
+          senderFrameId: currentProfile.avatarFrameId || "neon_pulse",
+          senderAppRankId: currentProfile.appRankId || "none",
+          senderRole: activeRoom.creatorId === currentAuthUser.uid ? "ADMIN" : "MEMBER",
+          content: text,
+          reactionCount: 0,
+          audioDurationMs: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        $("chatMsgInput").value = "";
+      } catch (e) { toast("Error enviando mensaje: " + e.message, "err"); }
+    };
+
+    // Tienda & Cupos
+    function frameInventoryMap() {
+      try { return JSON.parse(currentProfile?.inventoryJson || "{}"); } catch (_) { return {}; }
+    }
+
+    function renderFrames() {
+      const q = $("frameSearchInput").value.trim().toLowerCase();
+      const cat = $("frameCatFilter").value;
+      const inv = frameInventoryMap();
+      const favs = new Set((currentProfile?.favoriteFrameIds || "").split(",").filter(Boolean));
+      const items = allFrames
+        .filter((f) => (cat === "Todas" || f.category === cat))
+        .filter((f) => !q || (f.title || "").toLowerCase().includes(q) || (f.creatorName || "").toLowerCase().includes(q))
+        .sort((a, b) => (Number(b.isFeatured) - Number(a.isFeatured)) || ((b.salesCount || 0) - (a.salesCount || 0)));
+
+      const grid = $("framesGrid");
+      if (items.length === 0) {
+        grid.innerHTML = `<p class="muted">No hay diseños publicados aún en esta categoría.</p>`;
+        return;
+      }
+      grid.innerHTML = items.map((f) => {
+        const owned = Boolean(inv["frame_" + f.id]) || f.creatorId === currentAuthUser?.uid;
+        const equipped = currentProfile?.avatarFrameId === f.id;
+        const isFav = favs.has(f.id);
+        const colorHex = "#" + ((Number(f.primaryColorHex || 0xFF9D4EDD) & 0xFFFFFF).toString(16).padStart(6, "0"));
+        return `
+          <div class="card">
+            <div class="row">
+              <div class="avatar-ring" style="border-color:${colorHex}; box-shadow:0 0 14px ${colorHex};">${f.isFeatured ? "🌟" : "🖼️"}</div>
+              <div style="flex:1;">
+                <strong>${esc(f.title)}</strong>
+                <div class="muted">por @${esc(f.creatorName)} • ${esc(f.category || "Marco")}</div>
+              </div>
+              <button class="btn btn-ghost btn-sm fav-btn" data-id="${esc(f.id)}">${isFav ? "❤️" : "🤍"} ${f.favoriteCount || 0}</button>
+            </div>
+            <p class="muted" style="margin:8px 0;">${esc(f.description || "Diseño personalizado VozMundo")}</p>
+            <div class="row">
+              <span class="pill gold">${(f.priceCoins || 0) === 0 ? "Gratis" : `💎 ${f.priceCoins}`}</span>
+              <span class="muted">${f.salesCount || 0} ventas</span>
+              <button class="btn ${equipped ? 'btn-cyan' : 'btn-primary'} btn-sm buy-frame-btn" data-id="${esc(f.id)}">
+                ${equipped ? "Equipado ✓" : owned ? "Equipar" : "Comprar"}
+              </button>
+            </div>
+          </div>`;
+      }).join("");
+
+      grid.querySelectorAll(".fav-btn").forEach((b) => {
+        b.onclick = async () => {
+          const fid = b.dataset.id;
+          const set = new Set((currentProfile?.favoriteFrameIds || "").split(",").filter(Boolean));
+          const adding = !set.has(fid);
+          if (adding) set.add(fid); else set.delete(fid);
+          const csv = Array.from(set).join(",");
+          try {
+            await updateDoc(doc(db, "users", currentAuthUser.uid), { favoriteFrameIds: csv, updatedAt: serverTimestamp() });
+            await updateDoc(doc(db, "custom_frames", fid), { favoriteCount: increment(adding ? 1 : -1) });
+          } catch (e) { toast("Error: " + e.message, "err"); }
+        };
+      });
+
+      grid.querySelectorAll(".buy-frame-btn").forEach((b) => {
+        b.onclick = async () => {
+          const f = allFrames.find((x) => x.id === b.dataset.id);
+          if (!f || !currentProfile) return;
+          const inv = frameInventoryMap();
+          const owned = Boolean(inv["frame_" + f.id]) || f.creatorId === currentAuthUser.uid;
+          const owner = isOwnerUser(currentAuthUser, currentProfile);
+          const price = owned ? 0 : (f.priceCoins || 0);
+          if (!owned && !owner && (currentProfile.coinsCount || 0) < price) {
+            return toast(`Necesitas 💎 ${price} monedas para comprar "${f.title}".`, "err");
+          }
+          inv["frame_" + f.id] = 1;
+          const newCoins = owner ? 999999999 : ((currentProfile.coinsCount || 0) - price);
+          try {
+            await updateDoc(doc(db, "users", currentAuthUser.uid), {
+              coinsCount: newCoins,
+              inventoryJson: JSON.stringify(inv),
+              avatarFrameId: f.id,
+              updatedAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, "users_public", currentAuthUser.uid), {
+              avatarFrameId: f.id,
+              updatedAt: serverTimestamp()
+            });
+            if (!owned && price > 0 && f.creatorId !== currentAuthUser.uid) {
+              const cPub = allPublicUsers.find((u) => u.userId === f.creatorId);
+              const cRank = creatorRankFor(cPub?.creatorSalesCount || 0);
+              const share = Math.max(1, Math.floor((price * cRank.sharePct) / 100));
+              await updateDoc(doc(db, "custom_frames", f.id), { salesCount: increment(1) });
+              await updateDoc(doc(db, "users", f.creatorId), {
+                coinsCount: increment(share),
+                creatorSalesCount: increment(1),
+                creatorEarningsCoins: increment(share),
+                updatedAt: serverTimestamp()
+              });
+            }
+            toast(`¡"${f.title}" equipado en tu perfil!`);
+          } catch (e) { toast("Error al comprar: " + e.message, "err"); }
+        };
+      });
+    }
+    $("frameSearchInput").oninput = renderFrames;
+    $("frameCatFilter").onchange = renderFrames;
+
+    function renderWorkshop() {
+      if (!currentProfile || !currentAuthUser) return;
+      const mine = allFrames.filter((f) => f.creatorId === currentAuthUser.uid);
+      const maxSlots = currentProfile.maxFrameSlots || 10;
+      const rank = creatorRankFor(currentProfile.creatorSalesCount || 0);
+      $("cupoSummaryText").textContent = `Espacios ocupados: ${mine.length}/${maxSlots} • Ventas totales: ${currentProfile.creatorSalesCount || 0} • ${rank.name}`;
+
+      $("cupoTiersList").innerHTML = CUPO_TIERS.map((t) => {
+        const unlocked = maxSlots >= t.maxSlots;
+        const canBuyNext = t.cost > 0 && !unlocked && maxSlots < t.maxSlots && t.maxSlots === (CUPO_TIERS.find((x) => x.maxSlots > maxSlots)?.maxSlots);
+        return `
+          <div class="row" style="padding:8px 10px; border-radius:12px; background:rgba(255,255,255,0.04);">
+            <span>${t.label}</span>
+            ${unlocked
+              ? `<span class="rank-tag">Desbloqueado ✓</span>`
+              : canBuyNext
+                ? `<button class="btn btn-gold btn-sm upgrade-cupo-btn" data-slots="${t.maxSlots}" data-cost="${t.cost}">Ampliar 💎 ${t.cost}</button>`
+                : `<span class="muted">💎 ${t.cost}</span>`}
+          </div>`;
+      }).join("");
+
+      document.querySelectorAll(".upgrade-cupo-btn").forEach((btn) => {
+        btn.onclick = async () => {
+          const targetSlots = Number(btn.dataset.slots);
+          const cost = Number(btn.dataset.cost);
+          const owner = isOwnerUser(currentAuthUser, currentProfile);
+          const actualCost = owner ? 0 : cost;
+          if (!owner && (currentProfile.coinsCount || 0) < actualCost) {
+            return toast(`Necesitas 💎 ${actualCost} monedas para ampliar tu cupo a ${targetSlots}.`, "err");
+          }
+          try {
+            await updateDoc(doc(db, "users", currentAuthUser.uid), {
+              maxFrameSlots: targetSlots,
+              coinsCount: owner ? 999999999 : ((currentProfile.coinsCount || 0) - actualCost),
+              updatedAt: serverTimestamp()
+            });
+            toast(`¡Cupo ampliado permanentemente a ${targetSlots} marcos!`);
+          } catch (e) { toast("Error ampliando cupo: " + e.message, "err"); }
+        };
+      });
+
+      const myGrid = $("myDesignsGrid");
+      myGrid.innerHTML = mine.length === 0
+        ? `<p class="muted">Aún no has publicado diseños en tu taller.</p>`
+        : mine.map((f) => `
+          <div class="card">
+            <div class="row">
+              <strong>${esc(f.title)}</strong>
+              <button class="btn btn-danger btn-sm del-frame-btn" data-id="${esc(f.id)}">Retirar</button>
+            </div>
+            <div class="muted">${esc(f.category)} • 💎 ${f.priceCoins || 0} • ${f.salesCount || 0} ventas</div>
+          </div>`).join("");
+
+      myGrid.querySelectorAll(".del-frame-btn").forEach((b) => {
+        b.onclick = async () => {
+          try {
+            await deleteDoc(doc(db, "custom_frames", b.dataset.id));
+            toast("Diseño retirado de la tienda. Liberaste 1 espacio de cupo.");
+          } catch (e) { toast("Error retirando diseño: " + e.message, "err"); }
+        };
+      });
+    }
+
+    $("publishDesignBtn").onclick = async () => {
+      if (!currentProfile || !currentAuthUser) return;
+      const mine = allFrames.filter((f) => f.creatorId === currentAuthUser.uid);
+      const maxSlots = currentProfile.maxFrameSlots || 10;
+      if (mine.length >= maxSlots) {
+        return toast(`¡Tu cupo está lleno (${mine.length}/${maxSlots})! Retira un marco o amplía tu cupo.`, "err");
+      }
+      const title = $("designTitleInput").value.trim();
+      if (title.length < 2) return toast("El título debe tener entre 2 y 30 caracteres.", "err");
+      const cat = $("designCatInput").value;
+      const price = Math.min(500, Math.max(20, Number($("designPriceInput").value || 100)));
+      const featured = $("designFeaturedChk").checked;
+      const rank = creatorRankFor(currentProfile.creatorSalesCount || 0);
+      const baseFee = cat === "Paquete" ? 150 : 50;
+      const discFee = Math.round(baseFee * (1 - rank.feeDisc / 100));
+      const featFee = featured && !rank.freeFeat ? 200 : 0;
+      const owner = isOwnerUser(currentAuthUser, currentProfile);
+      const totalFee = owner ? 0 : (discFee + featFee);
+      if (!owner && (currentProfile.coinsCount || 0) < totalFee) {
+        return toast(`Necesitas 💎 ${totalFee} monedas para publicar este diseño.`, "err");
+      }
+      const hexStr = ($("designColorInput").value || "#ffd166").replace("#", "");
+      const colorInt = (0xFF000000 + parseInt(hexStr, 16)) >>> 0;
+      const inv = frameInventoryMap();
+      try {
+        const ref = await addDoc(collection(db, "custom_frames"), {
+          creatorId: currentAuthUser.uid,
+          creatorName: (currentProfile.username || "Creador").slice(0, 30),
+          title,
+          frameType: "STUDIO",
+          primaryColorHex: colorInt,
+          secondaryColorHex: 0xFFFF4EC2,
+          stylePatternId: "ring_glow",
+          thicknessDp: 4,
+          sparkles: true,
+          priceCoins: price,
+          description: $("designDescInput").value.trim().slice(0, 100),
+          category: cat,
+          isFeatured: featured,
+          salesCount: 0,
+          favoriteCount: 0,
+          visibility: "public",
+          createdAt: serverTimestamp()
+        });
+        inv["frame_" + ref.id] = 1;
+        await updateDoc(doc(db, "users", currentAuthUser.uid), {
+          coinsCount: owner ? 999999999 : ((currentProfile.coinsCount || 0) - totalFee),
+          inventoryJson: JSON.stringify(inv),
+          updatedAt: serverTimestamp()
+        });
+        $("designTitleInput").value = "";
+        $("designDescInput").value = "";
+        $("designFeaturedChk").checked = false;
+        toast(`¡"${title}" publicado en Tienda VozMundo!`);
+      } catch (e) { toast("Error al publicar: " + e.message, "err"); }
+    };
+
+    // Feed Posts
+    function renderPosts(posts) {
+      const box = $("postsList");
+      box.innerHTML = posts.length === 0
+        ? `<p class="muted">No hay clips publicados aún.</p>`
+        : posts.map((p) => `
+          <div class="card">
+            <div class="row-wrap">
+              <strong>@${esc(p.authorName)}</strong>
+              ${p.authorAppRankId === 'owner' ? `<span class="rank-tag">👑 Dueño</span>` : ""}
+            </div>
+            <p style="margin:8px 0;">${esc(p.content)}</p>
+            <div class="row">
+              <span class="muted">❤️ ${p.likesCount || 0}</span>
+              <button class="btn btn-ghost btn-sm like-post-btn" data-id="${esc(p.id)}">Me gusta ❤️</button>
+            </div>
+          </div>`).join("");
+      box.querySelectorAll(".like-post-btn").forEach((b) => {
+        b.onclick = async () => {
+          try {
+            await updateDoc(doc(db, "posts", b.dataset.id), { likesCount: increment(1), updatedAt: serverTimestamp() });
+          } catch (e) { toast("Error: " + e.message, "err"); }
+        };
+      });
+    }
+
+    $("publishPostBtn").onclick = async () => {
+      if (!currentAuthUser || !currentProfile) return;
+      const content = $("postContentInput").value.trim();
+      if (!content) return;
+      try {
+        await addDoc(collection(db, "posts"), {
+          authorId: currentAuthUser.uid,
+          authorName: (currentProfile.username || "Usuario").slice(0, 30),
+          authorAvatarKey: currentProfile.presetAvatarKey || "anime",
+          authorFrameId: currentProfile.avatarFrameId || "neon_pulse",
+          authorAppRankId: currentProfile.appRankId || "none",
+          visibility: "public",
+          content,
+          likesCount: 0,
+          commentsCount: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        $("postContentInput").value = "";
+        toast("Clip publicado en el feed global.");
+      } catch (e) { toast("Error publicando clip: " + e.message, "err"); }
+    };
+
+    // Bottles
+    function renderBottles(bottles) {
+      const box = $("bottlesList");
+      box.innerHTML = bottles.length === 0
+        ? `<p class="muted">El mar está tranquilo. ¡Lanza la primera botella!</p>`
+        : bottles.map((b) => `
+          <div class="card">
+            <div class="row">
+              <strong>🫧 ${esc(b.anonymousAlias)}</strong>
+              <span class="rank-tag">${esc(b.moodTag)}</span>
+            </div>
+            <p style="margin:8px 0;">${esc(b.content)}</p>
+            ${b.replyContent ? `<div class="muted" style="color:var(--cyan);">↳ Respuesta: ${esc(b.replyContent)}</div>` : ""}
+          </div>`).join("");
+    }
+
+    $("throwBottleBtn").onclick = async () => {
+      if (!currentAuthUser) return;
+      const alias = $("bottleAliasInput").value.trim() || "Viajero Anónimo";
+      const content = $("bottleContentInput").value.trim();
+      if (content.length < 4) return toast("Escribe al menos 4 caracteres para tu botella.", "err");
+      try {
+        await addDoc(collection(db, "drifting_bottles"), {
+          authorId: currentAuthUser.uid,
+          anonymousAlias: alias.slice(0, 40),
+          moodTag: $("bottleMoodInput").value,
+          content,
+          visibility: "public",
+          expiresAtMillis: Date.now() + 24 * 60 * 60 * 1000,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        $("bottleContentInput").value = "";
+        toast("Botella lanzada al océano global.");
+      } catch (e) { toast("Error lanzando botella: " + e.message, "err"); }
+    };
+
+    // Profile Edit & Daily Check-In
+    $("saveProfileBtn").onclick = async () => {
+      if (!currentAuthUser) return;
+      const username = $("profileNameInput").value.trim();
+      const bio = $("profileBioInput").value.trim();
+      if (username.length < 2) return toast("El nombre debe tener al menos 2 letras.", "err");
+      try {
+        await updateDoc(doc(db, "users", currentAuthUser.uid), { username, bio, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, "users_public", currentAuthUser.uid), { username, bio, updatedAt: serverTimestamp() });
+        toast("Perfil actualizado.");
+      } catch (e) { toast("Error guardando perfil: " + e.message, "err"); }
+    };
+
+    $("dailyCheckInBtn").onclick = async () => {
+      if (!currentProfile || !currentAuthUser) return;
+      const now = Date.now();
+      const last = currentProfile.lastDailyCheckInAtMillis || 0;
+      if (now - last < 20 * 60 * 60 * 1000) {
+        return toast("Ya reclamaste tu check-in de hoy. Vuelve mañana para tu siguiente recompensa.", "warn");
+      }
+      const nextDay = ((currentProfile.dailyStreakDay || 0) % 7) + 1;
+      const reward = nextDay === 7 ? 60 : 15 + (nextDay - 1) * 5;
+      const owner = isOwnerUser(currentAuthUser, currentProfile);
+      try {
+        await updateDoc(doc(db, "users", currentAuthUser.uid), {
+          dailyStreakDay: nextDay,
+          lastDailyCheckInAtMillis: now,
+          coinsCount: owner ? 999999999 : ((currentProfile.coinsCount || 0) + reward),
+          updatedAt: serverTimestamp()
+        });
+        toast(`Check-in Día ${nextDay} completado: +${reward} monedas 💎`);
+      } catch (e) { toast("Error: " + e.message, "err"); }
+    };
+
+    $("copyInviteBtn").onclick = async () => {
+      const link = $("shareLinkBox").value;
+      const msg = `🔥 ¡Únete a NexoLive v2.1! Entra gratis desde la web o descarga el APK (sin Play Store): ${link}`;
+      try {
+        await navigator.clipboard.writeText(msg);
+        toast("¡Invitación copiada al portapapeles!");
+      } catch (_) {
+        $("shareLinkBox").select();
+        toast("Selecciona y copia el enlace de arriba.", "info");
+      }
+    };
+  </script>
+</body>
+</html>

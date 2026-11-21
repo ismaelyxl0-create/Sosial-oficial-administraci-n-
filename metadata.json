@@ -1,0 +1,6 @@
+{
+  "name": "NexoLive",
+  "description": "Plataforma de transmisiones en vivo IRL y Gaming con cámara en directo, chat en tiempo real, categorías y perfiles de creadores.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
